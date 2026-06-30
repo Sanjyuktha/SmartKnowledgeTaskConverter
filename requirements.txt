@@ -4,3 +4,4 @@ openai
 pypdf
 openpyxl
 pandas
+matplotlib
