@@ -1,7 +1,8 @@
 streamlit
+pandas
+pypdf
+matplotlib
+plotly
 pymongo
 openai
-pypdf
 openpyxl
-pandas
-matplotlib
