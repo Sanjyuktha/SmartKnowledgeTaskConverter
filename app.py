@@ -1034,7 +1034,8 @@ elif page == "Saved Projects":
 
     from mongodb import collection
 
-    projects = list(collection.find())
+    # FIX: Filter the search query so users only see their own saved records
+    projects = list(collection.find({"username": st.session_state["username"]}))
 
     st.write("Number of Projects:", len(projects))
 
