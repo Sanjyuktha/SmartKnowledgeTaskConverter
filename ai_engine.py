@@ -11,7 +11,7 @@ client = OpenAI(
 def generate_tasks(document_text, dynamic_team=None):
     # Fallback to defaults if list context fails to resolve
     if not dynamic_team:
-        dynamic_team = ["Sanju", "Joanna", "Sahana", "Pradeep", "Rakshanaa", "Parkavi"]
+        dynamic_team = ["Unassigned Project Member"]
         
     # Convert team list cleanly into a formatted string block for the AI model's prompt instructions
     team_prompt_string = "\n".join([f"- {name}" for name in dynamic_team])
