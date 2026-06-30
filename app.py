@@ -27,7 +27,7 @@ if st.sidebar.button("🚪 Log Out", use_container_width=True):
 # ---------------------------------
 st.set_page_config(
     page_title="Smart Knowledge Intelligence",
-    layout="wide"
+     layout="wide"
 )
 
 # ---------------------------------
@@ -463,9 +463,18 @@ if page == "Dashboard":
 # ==========================================
 # UPLOAD PAGE
 # ==========================================
+# ==========================================
+# UPLOAD PAGE
+# ==========================================
 elif page == "Upload Document":
 
     st.subheader("📄 Upload Knowledge Document")
+
+    from mongodb import db, collection
+
+    # 1. SAFEGUARD CHECK: Fetch user's team layout first to ensure it's not empty
+    team_record = db["teams"].find_one({"username": st.session_state["username"]})
+    active_team = team_record.get("members", []) if team_record else []
 
     uploaded_file = st.file_uploader(
         "Upload Requirement Document",
@@ -475,21 +484,17 @@ elif page == "Upload Document":
     if uploaded_file:
 
         if uploaded_file.type == "text/plain":
-
             text = uploaded_file.read().decode("utf-8")
 
         elif uploaded_file.type == "application/pdf":
-
             pdf = PdfReader(uploaded_file)
-
             text = ""
-
-            for page in pdf.pages:
-
-                page_text = page.extract_text()
-
+            for page_obj in pdf.pages:
+                page_text = page_obj.extract_text()
                 if page_text:
                     text += page_text + "\n"
+        else:
+            text = "" # Fallback for structural safety
 
         st.success("Document uploaded successfully!")
 
@@ -501,44 +506,46 @@ elif page == "Upload Document":
             height=200
         )
 
-        if st.button("🚀 Generate Tasks"):
+        # 2. ENFORCE TEAM ROSTER CONFIGURATION BEFORE GENERATION
+        if not active_team:
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.warning("⚠️ Your engineering team roster is currently empty! Please head over to the **'Team Members'** navigation panel and add your squad members first before parsing requirements.")
+        else:
+            if st.button("🚀 Generate Tasks"):
 
-            from ai_engine import generate_tasks
-            from mongodb import db
-            
-            team_record = db["teams"].find_one({"username": st.session_state["username"]})
-            active_team = team_record.get("members", []) if team_record else []
+                from ai_engine import generate_tasks
 
-            with st.spinner("AI is analyzing document..."):
+                with st.spinner("AI is analyzing document and distributing tasks among your squad..."):
 
-                tasks = generate_tasks(text)
-                
+                    # Pass the dynamic user-defined team directly into the AI parsing workflow
+                    tasks = generate_tasks(text, active_team)
+                    
+                    for task in tasks:
+                        task["status"] = False
+                        task["progress"] = 0
 
-                for task in tasks:
+                        if "assigned_user" not in task:
+                            task["assigned_user"] = "Unassigned"
 
-                    task["status"] = False
+                        if "time_period" not in task:
+                            task["time_period"] = "Not Estimated"
 
-                    task["progress"] = 0
+                    st.session_state["tasks"] = tasks
+     
+                    # Added "username" parameter mapping to preserve database data isolation layers
+                    result = collection.insert_one({
+                        "username": st.session_state["username"],
+                        "document_name": uploaded_file.name,
+                        "content": text,
+                        "tasks": tasks
+                    })
+                    st.write("Saved ID:", result.inserted_id)
 
-                    if "assigned_user" not in task:
-                        task["assigned_user"] = "Unassigned"
+                    st.success("Tasks generated and allocated successfully!")
 
-                    if "time_period" not in task:
-                        task["time_period"] = "Not Estimated"
-
-                st.session_state["tasks"] = tasks
-                from mongodb import collection
- 
-                result =  collection.insert_one({
-                    "username": st.session_state["username"],
-                    "document_name": uploaded_file.name,
-                    "content": text,
-                    "tasks": tasks
-                })
-                st.write("Saved ID:", result.inserted_id)
-
-                st.success("Tasks generated successfully!")
-
+# ==========================================
+# GENERATED TASKS PAGE
+# ==========================================
 # ==========================================
 # GENERATED TASKS PAGE
 # ==========================================
@@ -551,7 +558,7 @@ elif page == "Generated Tasks":
 
     from mongodb import collection, db
 
-    # Filter project list by the currently logged-in user
+    # Filter project list by the currently logged-in user for total isolation layer security
     projects = list(collection.find({"username": st.session_state["username"]}))
 
     if len(projects) > 0:
@@ -563,7 +570,7 @@ elif page == "Generated Tasks":
             project_names
         )
 
-        # Match both document name AND the user's username for security segmentation
+        # Match both document name AND the user's username for multi-tenant data protection
         project = collection.find_one(
             {
                 "document_name": selected_project,
@@ -597,15 +604,15 @@ elif page == "Generated Tasks":
             "time_period": "Time Period"
         })
 
-        # DYNAMIC LOOKUP: Fetch this specific user's customized team from the database
+        # DYNAMIC ROSTER LOOKUP: Fetch this specific user's custom engineering team
         team_record = db["teams"].find_one({"username": st.session_state["username"]})
         if team_record and team_record.get("members"):
             team_members = team_record.get("members")
         else:
-            # Fallback default roster if they haven't configured their squad yet
-            team_members = ["Sanju", "Joanna", "Sahana", "Pradeep", "Rakshanaa", "Parkavi"]
+            # Clean fallback option if they haven't onboarded any teammates yet
+            team_members = ["Unassigned"]
 
-        # Render the interactive data editor with the user's custom team dropdown choices
+        # Render the interactive data editor containing only the user's explicit team dropdown choices
         edited_df = st.data_editor(
             df,
             use_container_width=True,
@@ -628,6 +635,7 @@ elif page == "Generated Tasks":
             "Time Period": "time_period"
         }).to_dict("records")
 
+        # Push back any live manual changes to the specific project under the user's account
         collection.update_one(
             {"document_name": selected_project, "username": st.session_state["username"]},
             {"$set": {"tasks": tasks}}
@@ -660,6 +668,9 @@ elif page == "Generated Tasks":
 # ==========================================
 # TEAM MEMBERS (DYNAMIC ENTERPRISE SETUP)
 # ==========================================
+# ==========================================
+# TEAM MEMBERS (DYNAMIC ENTERPRISE SETUP)
+# ==========================================
 elif page == "Team Members":
 
     from mongodb import db, collection
@@ -670,11 +681,10 @@ elif page == "Team Members":
 
     current_user = st.session_state["username"]
 
-    # 1. FETCH OR INITIALIZE USER'S CUSTOM TEAM
+    # 1. FETCH CURRENT ROSTER FROM DATABASE (Starts completely empty if new user)
     team_record = teams_collection.find_one({"username": current_user})
     if not team_record:
-        # Default starter team if they haven't configured one yet
-        default_team = ["Sanju", "Joanna", "Sahana", "Pradeep", "Rakshanaa", "Parkavi"]
+        default_team = []
         teams_collection.insert_one({"username": current_user, "members": default_team})
         team_members = default_team
     else:
@@ -685,29 +695,39 @@ elif page == "Team Members":
     <p style='color:#7B8794; font-size:16px; margin-top:4px;'>Manage your custom engineering squad and monitor live resource distribution metrics.</p>
     """, unsafe_allow_html=True)
 
-    # 2. MANAGEMENT CRUDS (ADD / REMOVE MEMBERS)
-    with st.expander("⚙️ Manage Workspace Engineering Squad (Add/Remove Members)"):
+    # 2. FULLY DYNAMIC MANAGEMENT PANEL (ADD / REMOVE MEMBERS)
+    st.markdown("<br>", unsafe_allow_html=True)
+    with st.container():
+        st.markdown("### ⚙️ Workspace Roster Control")
         col_add, col_rem = st.columns(2)
+        
         with col_add:
-            new_member = st.text_input("Add New Teammate Name", placeholder="e.g. Rahul").strip()
-            if st.button("➕ Add Member", use_container_width=True):
-                if new_member and new_member not in team_members:
-                    teams_collection.update_one({"username": current_user}, {"$push": {"members": new_member}})
-                    st.success(f"Added {new_member} to your roster!")
-                    st.rerun()
+            new_member = st.text_input("Add New Teammate Name", placeholder="Type teammate name...", key="add_name_input").strip()
+            if st.button("➕ Add Member to Team", use_container_width=True):
+                if new_member:
+                    if new_member not in team_members:
+                        teams_collection.update_one({"username": current_user}, {"$push": {"members": new_member}})
+                        st.success(f"Added '{new_member}' successfully!")
+                        st.rerun()
+                    else:
+                        st.warning("This member is already in your team!")
+                else:
+                    st.error("Please enter a name.")
+                    
         with col_rem:
             if team_members:
-                member_to_remove = st.selectbox("Remove a Teammate", team_members)
-                if st.button("🗑️ Remove Member", use_container_width=True):
+                member_to_remove = st.selectbox("Select Teammate to Remove", team_members, key="remove_name_select")
+                if st.button("🗑️ Delete Member from Team", use_container_width=True):
                     teams_collection.update_one({"username": current_user}, {"$pull": {"members": member_to_remove}})
-                    st.warning(f"Removed {member_to_remove} from your roster.")
+                    st.warning(f"Removed '{member_to_remove}' from your team roster.")
                     st.rerun()
             else:
-                st.info("No members to remove.")
+                st.selectbox("Select Teammate to Remove", ["No team members added yet"], disabled=True)
+                st.button("🗑️ Delete Member from Team", disabled=True, use_container_width=True)
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("<br><hr>", unsafe_allow_html=True)
 
-    # 3. COMPUTE LIVE METRICS BASED ON DYNAMIC ROSTER
+    # 3. COMPUTE LIVE METRICS BASED ON THE DYNAMIC ROSTER
     projects = list(collection.find({"username": current_user}))
 
     member_stats = {}
@@ -745,7 +765,7 @@ elif page == "Team Members":
 
     total_pending = total_assigned - total_completed
 
-    # Display Cards
+    # Display Top Overview Metric Headers
     c1, c2, c3, c4 = st.columns(4)
     with c1:
         st.metric("Total Active Squad Size", len(team_members))
@@ -758,8 +778,9 @@ elif page == "Team Members":
 
     st.markdown("<br><br>", unsafe_allow_html=True)
     
+    # 4. RENDER TEAM CARDS DYNAMICALLY
     if not team_members:
-        st.info("Your engineering workspace roster is empty. Add members using the setup menu above!")
+        st.info("💡 Your engineering team roster is completely empty! Use the 'Workspace Roster Control' menu above to add your teammates and start tracking tasks.")
     else:
         cols = st.columns(3)
         for i, (member, stats) in enumerate(member_stats.items()):
@@ -779,8 +800,11 @@ elif page == "Team Members":
                 </div>
                 """, unsafe_allow_html=True)
                 st.progress(progress / 100)
-                if st.button(f"Profile Portfolio: {member}", key=f"view_{member}", use_container_width=True):
+                if st.button(f"🔍 Profile Portfolio: {member}", key=f"view_{member}", use_container_width=True):
                     st.session_state.selected_member = member
+# ==========================================
+# ANALYTICS PAGE
+# ==========================================
 # ==========================================
 # ANALYTICS PAGE
 # ==========================================
@@ -792,10 +816,11 @@ elif page == "Analytics":
 
 
     # =====================================
-    # LOAD DATA FROM MONGODB
+    # LOAD DATA FROM MONGODB (Isolated by User)
     # =====================================
 
-    projects = list(collection.find({}))
+    # FIX: Only load projects that belong to the active logged-in user session
+    projects = list(collection.find({"username": st.session_state["username"]}))
 
     total_tasks = 0
     completed_tasks = 0
@@ -857,79 +882,62 @@ elif page == "Analytics":
     st.markdown("<br>", unsafe_allow_html=True)
 
     # =====================================
-    # PRIORITY DISTRIBUTION
+    # RENDERING THE VISUALIZATIONS Safely
     # =====================================
+    if total_tasks == 0:
+        st.info("📊 No project metrics available yet. Go to 'Upload Document' to process files and view system analytics!")
+    else:
+        # =====================================
+        # PRIORITY DISTRIBUTION
+        # =====================================
 
-    st.markdown("""
-    <div style="
-    background:white;
-    padding:20px;
-    border-radius:20px;
-    margin-bottom:15px;
-    ">
-    <h2 style="color:#0B1F3A;">
-       Task Priority Distribution
-    </h2>
+        st.markdown("""
+        <div style="background:white; padding:20px; border-radius:20px; margin-bottom:15px;">
+        <h2 style="color:#0B1F3A;">Task Priority Distribution</h2>
+        <p style="color:#8A8F98;">Overview of High, Medium and Low priority tasks</p>
+        </div>
+        """, unsafe_allow_html=True)
 
-    <p style="color:#8A8F98;">
-    Overview of High, Medium and Low priority tasks
-    </p>
-    </div>
-    """, unsafe_allow_html=True)
+        priority_df = pd.DataFrame({
+            "Priority": ["High", "Medium", "Low"],
+            "Count": [high_tasks, medium_tasks, low_tasks]
+        })
 
-    priority_df = pd.DataFrame({
-        "Priority": ["High", "Medium", "Low"],
-        "Count": [high_tasks, medium_tasks, low_tasks]
-    })
+        fig1 = px.pie(
+            priority_df,
+            names="Priority",
+            values="Count",
+            hole=0.45
+        )
 
-    fig1 = px.pie(
-        priority_df,
-        names="Priority",
-        values="Count",
-        hole=0.45
-    )
+        fig1.update_layout(height=450)
+        st.plotly_chart(fig1, use_container_width=True)
 
-    fig1.update_layout(height=450)
+        # =====================================
+        # COMPLETION STATUS
+        # =====================================
 
-    st.plotly_chart(fig1, use_container_width=True)
+        st.markdown("""
+        <div style="background:white; padding:20px; border-radius:20px; margin-top:25px; margin-bottom:15px;">
+        <h2 style="color:#0B1F3A;">Task Completion Status</h2>
+        <p style="color:#8A8F98;">Track completed and pending tasks across projects</p>
+        </div>
+        """, unsafe_allow_html=True)
 
-    # =====================================
-    # COMPLETION STATUS
-    # =====================================
+        completion_df = pd.DataFrame({
+            "Status": ["Completed", "Pending"],
+            "Count": [completed_tasks, pending_tasks]
+        })
 
-    st.markdown("""
-    <div style="
-    background:white;
-    padding:20px;
-    border-radius:20px;
-    margin-top:25px;
-    margin-bottom:15px;
-    ">
-    <h2 style="color:#0B1F3A;">
-       Task Completion Status
-    </h2>
+        fig2 = px.bar(
+            completion_df,
+            x="Status",
+            y="Count",
+            text="Count"
+        )
 
-    <p style="color:#8A8F98;">
-    Track completed and pending tasks across projects
-    </p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    completion_df = pd.DataFrame({
-        "Status": ["Completed", "Pending"],
-        "Count": [completed_tasks, pending_tasks]
-    })
-
-    fig2 = px.bar(
-        completion_df,
-        x="Status",
-        y="Count",
-        text="Count"
-    )
-
-    fig2.update_layout(height=450)
-
-    st.plotly_chart(fig2, use_container_width=True) 
+        fig2.update_layout(height=450)
+        st.plotly_chart(fig2, use_container_width=True) 
 # ==========================================
 # SAVED PROJECTS
 # ==========================================
