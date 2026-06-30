@@ -6,6 +6,22 @@ from db import tasks_collection
 import matplotlib.pyplot as plt
 from mongodb import collection
 import plotly.express as px
+from auth import render_login_signup
+
+# Initialize authentication states
+if "authenticated" not in st.session_state:
+    st.session_state["authenticated"] = False
+
+# Force login if user is unauthenticated
+if not st.session_state["authenticated"]:
+    render_login_signup()
+    st.stop() # Stops execution here so they can't see the dashboard yet!
+
+# Add a logout capability at the bottom of your sidebar options
+if st.sidebar.button("🚪 Log Out", use_container_width=True):
+    st.session_state["authenticated"] = False
+    st.session_state["username"] = None
+    st.rerun()
 # ---------------------------------
 # PAGE CONFIG
 # ---------------------------------
@@ -203,7 +219,7 @@ if page == "Dashboard":
         st.session_state.dashboard_card = "overview"
 
     try:
-        projects = list(collection.find({}))
+        projects = list(collection.find({"username"}))
         
         if "card_view" not in st.session_state:
             st.session_state["card_view"] = None
@@ -224,7 +240,7 @@ if page == "Dashboard":
         completed_tasks = 0
         high_tasks = 0
 
-    project_count = collection.count_documents({})
+    project_count = collection.count_documents({"username": st.session_state["username"]})
 
     # ----------------------------------------------------
     # ADVANCED CONTAINER OVERLAY CSS (Eliminates Code Strings & Empty Boxes)
@@ -510,6 +526,7 @@ elif page == "Upload Document":
                 from mongodb import collection
  
                 result =  collection.insert_one({
+                    "username": st.session_state["username"],
                     "document_name": uploaded_file.name,
                     "content": text,
                     "tasks": tasks
@@ -528,7 +545,7 @@ elif page == "Generated Tasks":
 
     from mongodb import collection
 
-    projects = list(collection.find({}))
+    projects = list(collection.find({"username": st.session_state["username"]}))
 
     if len(projects) > 0:
 
@@ -540,7 +557,9 @@ elif page == "Generated Tasks":
         )
 
         project = collection.find_one(
-            {"document_name": selected_project}
+            {"document_name": selected_project,
+             "username": st.session_state["username"]
+            }
         )
 
         tasks = project.get("tasks", [])
@@ -555,7 +574,7 @@ elif page == "Generated Tasks":
                 task["time_period"] = "Not Estimated"
                 
         collection.update_one(
-            {"document_name": selected_project},
+            {"document_name": selected_project, "username": st.session_state["username"]},
             {"$set": {"tasks": tasks}}
         )
         df = pd.DataFrame(tasks)
@@ -635,7 +654,7 @@ elif page == "Team Members":
     if "selected_member" not in st.session_state:
         st.session_state.selected_member = None
 
-    projects = list(collection.find({}))
+    projects = list(collection.find({"username": st.session_state["username"]}))
 
     team_members = [
         "Sanju",
