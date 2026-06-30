@@ -504,6 +504,10 @@ elif page == "Upload Document":
         if st.button("🚀 Generate Tasks"):
 
             from ai_engine import generate_tasks
+            from mongodb import db
+            
+            team_record = db["teams"].find_one({"username": st.session_state["username"]})
+            active_team = team_record.get("members", []) if team_record else []
 
             with st.spinner("AI is analyzing document..."):
 
@@ -538,13 +542,16 @@ elif page == "Upload Document":
 # ==========================================
 # GENERATED TASKS PAGE
 # ==========================================
-
+# ==========================================
+# GENERATED TASKS PAGE
+# ==========================================
 elif page == "Generated Tasks":
 
     st.subheader("Generated Tasks")
 
-    from mongodb import collection
+    from mongodb import collection, db
 
+    # Filter project list by the currently logged-in user
     projects = list(collection.find({"username": st.session_state["username"]}))
 
     if len(projects) > 0:
@@ -556,9 +563,11 @@ elif page == "Generated Tasks":
             project_names
         )
 
+        # Match both document name AND the user's username for security segmentation
         project = collection.find_one(
-            {"document_name": selected_project,
-             "username": st.session_state["username"]
+            {
+                "document_name": selected_project,
+                "username": st.session_state["username"]
             }
         )
 
@@ -577,6 +586,7 @@ elif page == "Generated Tasks":
             {"document_name": selected_project, "username": st.session_state["username"]},
             {"$set": {"tasks": tasks}}
         )
+        
         df = pd.DataFrame(tasks)
         df = df.rename(columns={
             "task": "Task",
@@ -587,14 +597,15 @@ elif page == "Generated Tasks":
             "time_period": "Time Period"
         })
 
-        team_members = [
-            "Sanju",
-            "Joanna",
-            "Sahana",
-            "Pradeep",
-            "Rakshanaa",
-            "Parkavi"
-        ]
+        # DYNAMIC LOOKUP: Fetch this specific user's customized team from the database
+        team_record = db["teams"].find_one({"username": st.session_state["username"]})
+        if team_record and team_record.get("members"):
+            team_members = team_record.get("members")
+        else:
+            # Fallback default roster if they haven't configured their squad yet
+            team_members = ["Sanju", "Joanna", "Sahana", "Pradeep", "Rakshanaa", "Parkavi"]
+
+        # Render the interactive data editor with the user's custom team dropdown choices
         edited_df = st.data_editor(
             df,
             use_container_width=True,
@@ -606,6 +617,7 @@ elif page == "Generated Tasks":
                  )
             }
         )
+        
         tasks = edited_df.rename(columns={
             "Task": "task",
             "Priority": "priority",
@@ -617,7 +629,7 @@ elif page == "Generated Tasks":
         }).to_dict("records")
 
         collection.update_one(
-            {"document_name": selected_project},
+            {"document_name": selected_project, "username": st.session_state["username"]},
             {"$set": {"tasks": tasks}}
         )
 
@@ -644,35 +656,67 @@ elif page == "Generated Tasks":
 
     else:
         st.info("No tasks generated yet.")
+
 # ==========================================
-# TEAM MEMBERS (PREMIUM REDESIGN WITH PER-PROJECT SEGREGATION)
+# TEAM MEMBERS (DYNAMIC ENTERPRISE SETUP)
 # ==========================================
 elif page == "Team Members":
 
-    from mongodb import collection
+    from mongodb import db, collection
+    teams_collection = db["teams"]
 
     if "selected_member" not in st.session_state:
         st.session_state.selected_member = None
 
-    projects = list(collection.find({"username": st.session_state["username"]}))
+    current_user = st.session_state["username"]
 
-    team_members = [
-        "Sanju",
-        "Joanna",
-        "Sahana",
-        "Pradeep",
-        "Rakshanaa",
-        "Parkavi"
-    ]
+    # 1. FETCH OR INITIALIZE USER'S CUSTOM TEAM
+    team_record = teams_collection.find_one({"username": current_user})
+    if not team_record:
+        # Default starter team if they haven't configured one yet
+        default_team = ["Sanju", "Joanna", "Sahana", "Pradeep", "Rakshanaa", "Parkavi"]
+        teams_collection.insert_one({"username": current_user, "members": default_team})
+        team_members = default_team
+    else:
+        team_members = team_record.get("members", [])
 
-    # Structure data mapping to preserve task arrays along with their parent project context
+    st.markdown("""
+    <h1 style='color:#0B1F3A; margin-bottom:0; font-weight:800;'>Team Production Matrix</h1>
+    <p style='color:#7B8794; font-size:16px; margin-top:4px;'>Manage your custom engineering squad and monitor live resource distribution metrics.</p>
+    """, unsafe_allow_html=True)
+
+    # 2. MANAGEMENT CRUDS (ADD / REMOVE MEMBERS)
+    with st.expander("⚙️ Manage Workspace Engineering Squad (Add/Remove Members)"):
+        col_add, col_rem = st.columns(2)
+        with col_add:
+            new_member = st.text_input("Add New Teammate Name", placeholder="e.g. Rahul").strip()
+            if st.button("➕ Add Member", use_container_width=True):
+                if new_member and new_member not in team_members:
+                    teams_collection.update_one({"username": current_user}, {"$push": {"members": new_member}})
+                    st.success(f"Added {new_member} to your roster!")
+                    st.rerun()
+        with col_rem:
+            if team_members:
+                member_to_remove = st.selectbox("Remove a Teammate", team_members)
+                if st.button("🗑️ Remove Member", use_container_width=True):
+                    teams_collection.update_one({"username": current_user}, {"$pull": {"members": member_to_remove}})
+                    st.warning(f"Removed {member_to_remove} from your roster.")
+                    st.rerun()
+            else:
+                st.info("No members to remove.")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # 3. COMPUTE LIVE METRICS BASED ON DYNAMIC ROSTER
+    projects = list(collection.find({"username": current_user}))
+
     member_stats = {}
     for member in team_members:
         member_stats[member] = {
             "assigned": 0,
             "completed": 0,
             "pending": 0,
-            "projects_map": {}  # Structure: {"Project Name": {"pending": [], "completed": []}}
+            "projects_map": {}
         }
 
     total_assigned = 0
@@ -680,7 +724,6 @@ elif page == "Team Members":
 
     for project in projects:
         project_name = project.get("document_name", "Unnamed Project")
-        
         for task in project.get("tasks", []):
             user = task.get("assigned_user", "")
             if user not in member_stats:
@@ -689,7 +732,6 @@ elif page == "Team Members":
             total_assigned += 1
             member_stats[user]["assigned"] += 1
 
-            # Initialize project buckets if tracking them for the first time for this user
             if project_name not in member_stats[user]["projects_map"]:
                 member_stats[user]["projects_map"][project_name] = {"pending": [], "completed": []}
 
@@ -703,179 +745,42 @@ elif page == "Team Members":
 
     total_pending = total_assigned - total_completed
 
-    # ----------------------------------------------------
-    # PREMIUM UI SYSTEM STYLING INSIGHTS
-    # ----------------------------------------------------
-    st.markdown("""
-    <style>
-    /* Clean up default Streamlit progress bar spacing */
-    div[data-testid="stProgress"] {
-        margin-top: -10px !important;
-        margin-bottom: 15px !important;
-    }
-    
-    /* Premium style normalization for secondary action buttons */
-    div[data-testid="stBlock"] div[data-testid="stButton"] button {
-        background-color: #F8FAFC !important;
-        border: 1px solid #E2E8F0 !important;
-        color: #0B1F3A !important;
-        border-radius: 12px !important;
-        font-weight: 600 !important;
-        font-size: 14px !important;
-        transition: all 0.2s ease !important;
-    }
-    div[data-testid="stBlock"] div[data-testid="stButton"] button:hover {
-        background-color: #D4A24C !important;
-        color: white !important;
-        border-color: #D4A24C !important;
-        box-shadow: 0 4px 12px rgba(212,162,76,0.2) !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    st.markdown("""
-    <h1 style='color:#0B1F3A; margin-bottom:0; font-weight:800;'>Team Production Matrix</h1>
-    <p style='color:#7B8794; font-size:16px; margin-top:4px;'>Manage task distribution profiles across your core development engineering sprint cycle.</p>
-    """, unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # Summary Metrics Headers
+    # Display Cards
     c1, c2, c3, c4 = st.columns(4)
-
-    def summary_card(title, value, color, border_color):
-        st.markdown(f"""
-        <div style="background: white; border-radius: 22px; padding: 22px; border-top: 5px solid {border_color}; box-shadow: 0 10px 30px rgba(0,0,0,0.06); height: 140px;">
-            <p style="color: #6B7280; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin: 0;">{title}</p>
-            <h1 style="color: {color}; font-size: 42px; font-weight: 800; margin-top: 10px; margin-bottom: 0; line-height: 1;">{value}</h1>
-        </div>
-        """, unsafe_allow_html=True)
-
     with c1:
-        summary_card("Total Active Engine Users", 6, "#0B1F3A", "#0B1F3A")
+        st.metric("Total Active Squad Size", len(team_members))
     with c2:
-        summary_card("Assigned Sprint Tasks", total_assigned, "#D4A24C", "#D4A24C")
+        st.metric("Assigned Sprint Tasks", total_assigned)
     with c3:
-        summary_card("Completed Tasks", total_completed, "#16A34A", "#16A34A")
+        st.metric("Completed Tasks", total_completed)
     with c4:
-        summary_card("Pending Backlog Tasks", total_pending, "#EF4444", "#EF4444")
+        st.metric("Pending Backlog", total_pending)
 
     st.markdown("<br><br>", unsafe_allow_html=True)
-    cols = st.columns(3)
-
-    for i, (member, stats) in enumerate(member_stats.items()):
-        with cols[i % 3]:
-            progress = 0
-            if stats["assigned"] > 0:
-                progress = int((stats["completed"] / stats["assigned"]) * 100)
-
-            if stats["pending"] >= 6:
-                badge_html = '<span style="background:#FEE2E2; color:#B91C1C; font-size:12px; font-weight:700; padding:6px 14px; border-radius:20px;">🔴 Heavy Workload</span>'
-            elif 3 <= stats["pending"] <= 5:
-                badge_html = '<span style="background:#FEF3C7; color:#B45309; font-size:12px; font-weight:700; padding:6px 14px; border-radius:20px;">🟡 Moderate Workload</span>'
-            else:
-                badge_html = '<span style="background:#DCFCE7; color:#15803D; font-size:12px; font-weight:700; padding:6px 14px; border-radius:20px;">🟢 Light Workload</span>'
-
-            st.markdown(f"""
-            <div style="background: white; border-radius: 24px; padding: 28px 28px 20px 28px; box-shadow: 0 12px 35px rgba(0,0,0,.06); margin-bottom: 10px; position: relative;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px;">
-                    <h3 style="margin: 0; color: #0B1F3A; font-weight: 700; font-size: 22px;">{member}</h3>
-                    {badge_html}
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 15px; color: #4B5563;">
-                    <span>📋 Assigned Tasks</span>
-                    <span style="font-weight: 700; color: #0B1F3A;">{stats['assigned']}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 15px; color: #4B5563;">
-                    <span>✅ Completed Sprint</span>
-                    <span style="font-weight: 700; color: #16A34A;">{stats['completed']}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 15px; color: #4B5563;">
-                    <span>⏳ Pending Tasks</span>
-                    <span style="font-weight: 700; color: #EF4444;">{stats['pending']}</span>
-                </div>
-                <div style="font-size: 13px; color: #9CA3AF; margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Sprint Progress</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-            st.progress(progress / 100)
-            
-            if st.button(f"🔍 Profile Portfolio: {member}", key=f"view_{member}", use_container_width=True):
-                st.session_state.selected_member = member
-
-# ----------------------------------------------------
-# DRILLDOWN PANEL: MULTI-PROJECT SEGREGATED LEDGER VIEW
-# ----------------------------------------------------
-if st.session_state.get("selected_member"):
-    member = st.session_state.selected_member
-
-    st.markdown("<br><hr>", unsafe_allow_html=True)
     
-    back_col, title_col = st.columns([1, 6])
-    with back_col:
-        st.markdown("<div style='margin-top: 5px;'></div>", unsafe_allow_html=True)
-        if st.button("⬅ Back", key="back_button", use_container_width=True):
-            st.session_state.selected_member = None
-            st.rerun()
-            
-    with title_col:
-        st.markdown(f"<h2 style='color:#0B1F3A; margin: 0; font-weight: 700;'>Task Ledger for {member}</h2>", unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    user_projects = member_stats[member]["projects_map"]
-
-    if len(user_projects) == 0:
-        st.info("No developmental tasks registered to this specific project owner account.")
+    if not team_members:
+        st.info("Your engineering workspace roster is empty. Add members using the setup menu above!")
     else:
-        # Helper card layout engine to keep styling completely clean
-        def render_task_card(task, is_completed):
-            status_pill = '<span style="background:#DCFCE7; color:#15803D; padding:4px 12px; border-radius:12px; font-size:13px; font-weight:600;">✅ Completed</span>' if is_completed else '<span style="background:#FEF3C7; color:#B45309; padding:4px 12px; border-radius:12px; font-size:13px; font-weight:600;">⏳ Pending</span>'
-            priority_color = "#EF4444" if task.get("priority") == "High" else ("#F59E0B" if task.get("priority") == "Medium" else "#3B82F6")
-            
-            st.markdown(f"""
-            <div style="background: white; padding: 25px; border-radius: 20px; margin-bottom: 18px; box-shadow: 0 8px 25px rgba(0,0,0,.04); border-left: 5px solid {priority_color};">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-                    <h4 style="margin: 0; color: #0B1F3A; font-size: 18px; font-weight: 700;">{task.get("task","Task")}</h4>
-                    <div>
-                        <span style="background:#F1F5F9; color:#475569; padding:4px 12px; border-radius:12px; font-size:13px; font-weight:600; margin-right:8px;">⏱ {task.get("time_period","-")}</span>
-                        {status_pill}
+        cols = st.columns(3)
+        for i, (member, stats) in enumerate(member_stats.items()):
+            with cols[i % 3]:
+                progress = int((stats["completed"] / stats["assigned"] * 100)) if stats["assigned"] > 0 else 0
+                badge = '🔴 Heavy' if stats["pending"] >= 6 else ('🟡 Mod' if 3 <= stats["pending"] <= 5 else '🟢 Light')
+                
+                st.markdown(f"""
+                <div style="background: white; border-radius: 24px; padding: 28px 28px 20px 28px; box-shadow: 0 12px 35px rgba(0,0,0,.06); margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px;">
+                        <h3 style="margin: 0; color: #0B1F3A; font-weight: 700; font-size: 22px;">{member}</h3>
+                        <span style="font-size:12px; font-weight:700;">{badge} Workload</span>
                     </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 15px; color: #4B5563;"><span>📋 Assigned Tasks</span><b>{stats['assigned']}</b></div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 15px; color: #4B5563;"><span>✅ Completed Sprint</span><b style="color:#16A34A;">{stats['completed']}</b></div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 15px; color: #4B5563;"><span>⏳ Pending Tasks</span><b style="color:#EF4444;">{stats['pending']}</b></div>
                 </div>
-                <p style="color: #4B5563; font-size: 15px; margin: 0; line-height: 1.6;">{task.get("description","")}</p>
-            </div>
-            """, unsafe_allow_html=True)
-
-        # Loop through each project that has tasks belonging to this user
-        for proj_name, status_buckets in user_projects.items():
-            p_pending = status_buckets["pending"]
-            p_completed = status_buckets["completed"]
-            
-            # Skip compiling layout if a project exists in db but holds zero items for this specific engineer
-            if not p_pending and not p_completed:
-                continue
-
-            # Render Project Title Block Section Container Header
-            st.markdown(f"""
-            <div style="background: #0B1F3A; padding: 14px 25px; border-radius: 14px; margin-top: 30px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(11,31,58,0.15);">
-                <h3 style="margin: 0; color: white; font-weight: 700; font-size: 20px; letter-spacing: 0.5px;">📁 PROJECT: {proj_name.upper()}</h3>
-            </div>
-            """, unsafe_allow_html=True)
-
-            # Sub-split 1: Pending Tasks under this specific project title
-            st.markdown("<h4 style='color:#EF4444; margin-bottom:12px; font-weight:700; padding-left:5px;'>⏳ Pending Backlog</h4>", unsafe_allow_html=True)
-            if not p_pending:
-                st.markdown("<p style='color:#6B7280; font-size:14px; padding-left:15px; margin-bottom:20px;'>🎉 No pending tasks for this project.</p>", unsafe_allow_html=True)
-            else:
-                for task in p_pending:
-                    render_task_card(task, is_completed=False)
-
-            # Sub-split 2: Completed Tasks under this specific project title
-            st.markdown("<h4 style='color:#16A34A; margin-bottom:12px; font-weight:700; padding-left:5px; margin-top:15px;'>✅ Completed Tasks</h4>", unsafe_allow_html=True)
-            if not p_completed:
-                st.markdown("<p style='color:#6B7280; font-size:14px; padding-left:15px; margin-bottom:20px;'>No completed tasks under this project yet.</p>", unsafe_allow_html=True)
-            else:
-                for task in p_completed:
-                    render_task_card(task, is_completed=True)
+                """, unsafe_allow_html=True)
+                st.progress(progress / 100)
+                if st.button(f"Profile Portfolio: {member}", key=f"view_{member}", use_container_width=True):
+                    st.session_state.selected_member = member
 # ==========================================
 # ANALYTICS PAGE
 # ==========================================
