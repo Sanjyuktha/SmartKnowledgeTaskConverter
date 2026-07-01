@@ -17,11 +17,7 @@ if not st.session_state["authenticated"]:
     render_login_signup()
     st.stop() # Stops execution here so they can't see the dashboard yet!
 
-# Add a logout capability at the bottom of your sidebar options
-if st.sidebar.button("🚪 Log Out", use_container_width=True):
-    st.session_state["authenticated"] = False
-    st.session_state["username"] = None
-    st.rerun()
+
 # ---------------------------------
 # PAGE CONFIG
 # ---------------------------------
@@ -175,6 +171,30 @@ page = st.sidebar.radio(
         "Saved Projects"
     ]
 )
+st.sidebar.markdown("---")
+st.sidebar.markdown("""
+<style>
+div[data-testid="stSidebar"] div.stButton > button {
+    background-color: #F8FAFC !important;
+    color: #0F172A !important;
+    font-weight: 700 !important;
+    border: 1px solid #E2E8F0 !important;
+    border-radius: 10px !important;
+    transition: all 0.2s ease-in-out !important;
+}
+div[data-testid="stSidebar"] div.stButton > button:hover {
+    background-color: #EF4444 !important;
+    color: #FFFFFF !important;
+    border-color: #EF4444 !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+if st.sidebar.button("Log Out", use_container_width=True, key="sidebar_logout_global"):
+    st.session_state["authenticated"] = False
+    st.session_state["username"] = None
+    st.rerun()
+
 # ---------------------------------
 # HEADER
 # ---------------------------------
@@ -468,7 +488,7 @@ if page == "Dashboard":
 # ==========================================
 elif page == "Upload Document":
 
-    st.subheader("📄 Upload Knowledge Document")
+    st.subheader("Upload Knowledge Document")
 
     from mongodb import db, collection
 
@@ -943,7 +963,7 @@ elif page == "Analytics":
 # ==========================================
 elif page == "Saved Projects":
 
-    st.subheader("📁 Saved Projects")
+    st.subheader("Saved Projects")
 
     from mongodb import collection
 
