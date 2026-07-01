@@ -261,7 +261,7 @@ if page == "Dashboard":
         st.session_state.dashboard_card = "overview"
 
     try:
-        projects = list(collection.find({"username"}))
+        projects = list(collection.find({"username": st.session_state["username"]}))
         
         if "card_view" not in st.session_state:
             st.session_state["card_view"] = None
