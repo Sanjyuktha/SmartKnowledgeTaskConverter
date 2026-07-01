@@ -99,7 +99,7 @@ def render_login_signup():
     if st.session_state["onboarding_step"] == "splash":
         st.markdown('<div class="splash-container">', unsafe_allow_html=True)
         
-        logo_filename = "edited-image.png"
+        logo_filename = "logo.png"
         
         if os.path.exists(logo_filename):
             img = Image.open(logo_filename)
