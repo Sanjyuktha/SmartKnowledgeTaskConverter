@@ -12,6 +12,26 @@ def hash_password(password):
 
 
 # ----------------------------------------------------
+# WIDE LAYOUT (fixes the narrow/"vertical" card)
+# ----------------------------------------------------
+def _ensure_wide_layout():
+    # Streamlit's default "centered" layout caps page width at ~730px,
+    # which is why the split card was rendering narrow and the heading
+    # was wrapping onto 3 lines. Wide mode lets it use the full screen.
+    # Must be the first st.* call in the whole app, and can only run once,
+    # so we swallow the error if it was already set elsewhere (e.g. your
+    # main entry file).
+    try:
+        st.set_page_config(
+            page_title="REQ 2 TASK AI",
+            layout="wide",
+            initial_sidebar_state="collapsed",
+        )
+    except st.errors.StreamlitAPIException:
+        pass
+
+
+# ----------------------------------------------------
 # GLOBAL STYLES
 # ----------------------------------------------------
 def _inject_global_styles():
@@ -100,10 +120,11 @@ def _inject_global_styles():
     .portal-core-title {
         color: #0F172A !important;
         font-family: 'Inter', sans-serif !important;
-        font-size: 40px !important;
+        font-size: clamp(26px, 2.6vw, 40px) !important;
         font-weight: 800 !important;
         letter-spacing: -1.5px !important;
         margin: 0 0 8px 0 !important;
+        white-space: nowrap !important;
     }
     .portal-core-sub {
         color: #64748B !important;
@@ -277,12 +298,14 @@ def _render_portal_pane():
 # MAIN ENTRY POINT
 # ----------------------------------------------------
 def render_login_signup():
+    _ensure_wide_layout()
+
     if "onboarding_step" not in st.session_state:
         st.session_state["onboarding_step"] = "splash"
 
     _inject_global_styles()
 
-    _, master_grid, _ = st.columns([0.2, 3.6, 0.2])
+    _, master_grid, _ = st.columns([0.5, 3, 0.5])
 
     with master_grid:
         # This container itself IS the white card -- no HTML overlay, no margin hacks.
