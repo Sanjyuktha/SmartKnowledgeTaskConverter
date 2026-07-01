@@ -14,9 +14,9 @@ def render_login_signup():
         st.session_state["onboarding_step"] = "splash"
 
     # ----------------------------------------------------
-    # PREMIUM PORTAL LUXURY STYLING
+    # FIX: BULLETPROOF STYLING INJECTION (No text leaks)
     # ----------------------------------------------------
-    st.markdown("""
+    st.html("""
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
     <style>
     .stApp {
@@ -30,25 +30,18 @@ def render_login_signup():
     }
     
     .splash-title {
-        color: #FFFFFF;
-        font-size: 58px;
-        font-weight: 900;
-        letter-spacing: -1px;
-        margin-bottom: 5px;
+        color: #FFFFFF !important;
+        font-size: 58px !important;
+        font-weight: 900 !important;
+        letter-spacing: -1px !important;
+        margin-bottom: 5px !important;
     }
     
     .splash-tagline {
-        color: #D4A24C;
-        font-size: 20px;
-        font-weight: 500;
-        margin-bottom: 30px;
-    }
-    
-    /* Center aligning image elements cleanly */
-    .logo-wrapper {
-        display: flex;
-        justify-content: center;
-        margin-bottom: 20px;
+        color: #D4A24C !important;
+        font-size: 20px !important;
+        font-weight: 500 !important;
+        margin-bottom: 30px !important;
     }
     
     div.stButton > button {
@@ -83,7 +76,7 @@ def render_login_signup():
         color: #D4A24C !important;
     }
     </style>
-    """, unsafe_allow_html=True)
+    """)
 
     # ----------------------------------------------------
     # PHASE 1: WELCOME BRAND SPLASH SCREEN
@@ -91,17 +84,14 @@ def render_login_signup():
     if st.session_state["onboarding_step"] == "splash":
         st.markdown('<div class="splash-container">', unsafe_allow_html=True)
         
-        # Look for the uploaded logo file in your repository path safely
-        logo_filename = "req2task.png" # Change this to your exact filename (e.g. "logo.png")
+        logo_filename = "req2task.png"
         
         if os.path.exists(logo_filename):
             img = Image.open(logo_filename)
-            # Center the image using Streamlit's built-in columns layout
             _, img_col, _ = st.columns([1, 0.6, 1])
             with img_col:
                 st.image(img, use_container_width=True)
         else:
-            # Fallback text if the file isn't uploaded to GitHub yet
             st.markdown('<div style="font-size:80px; margin-bottom:20px;">🤖</div>', unsafe_allow_html=True)
 
         st.markdown("""
@@ -112,7 +102,6 @@ def render_login_signup():
         
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # Center-aligned onboarding entry button
         _, button_col, _ = st.columns([1, 1.2, 1])
         with button_col:
             if st.button("Get Started  🚀", use_container_width=True):
