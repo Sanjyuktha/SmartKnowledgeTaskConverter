@@ -171,30 +171,43 @@ page = st.sidebar.radio(
         "Saved Projects"
     ]
 )
+# ----------------------------------------------------
+# FIXED GLOBAL LOGOUT BUTTON & CSS THEME LOCK
+# ----------------------------------------------------
 st.sidebar.markdown("---")
-st.sidebar.markdown("""
+
+# This CSS fixes the button state, the text color, and forces it to behave on the dashboard tab
+st.markdown("""
 <style>
-div[data-testid="stSidebar"] div.stButton > button {
-    background-color: #F8FAFC !important;
-    color: #0F172A !important;
+/* Targeting the specific sidebar button element structural container */
+div[data-testid="stSidebar"] div.stElementContainer div.stButton > button {
+    background-color: #1E293B !important;   /* Solid dark slate background */
+    color: #FFFFFF !important;              /* Crisp white text that NEVER disappears */
     font-weight: 700 !important;
-    border: 1px solid #E2E8F0 !important;
+    font-size: 14px !important;
+    border: 1px solid #334155 !important;   /* Subtle clean border outline */
     border-radius: 10px !important;
+    padding: 10px 20px !important;
+    width: 100% !important;                 /* Forces full sidebar width on all pages */
+    display: block !important;
+    margin: 10px 0 !important;
     transition: all 0.2s ease-in-out !important;
 }
-div[data-testid="stSidebar"] div.stButton > button:hover {
-    background-color: #EF4444 !important;
-    color: #FFFFFF !important;
+
+/* Hover-only effect: Turns red cleanly when your cursor touches it */
+div[data-testid="stSidebar"] div.stElementContainer div.stButton > button:hover {
+    background-color: #EF4444 !important;   /* Premium crimson red color */
+    color: #FFFFFF !important;              /* Keep text white on hover */
     border-color: #EF4444 !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
+# Functional layout handler wrapper
 if st.sidebar.button("Log Out", use_container_width=True, key="sidebar_logout_global"):
     st.session_state["authenticated"] = False
     st.session_state["username"] = None
     st.rerun()
-
 # ---------------------------------
 # HEADER
 # ---------------------------------
