@@ -13,191 +13,232 @@ def render_login_signup():
     if "onboarding_step" not in st.session_state:
         st.session_state["onboarding_step"] = "splash"
 
-    # Initialize password visibility states if not present
-    if "show_login_pass" not in st.session_state:
-        st.session_state["show_login_pass"] = False
-    if "show_reg_pass" not in st.session_state:
-        st.session_state["show_reg_pass"] = False
-
     # ----------------------------------------------------
-    # PREMIUM PORTAL LUXURY STYLING
+    # PREMIUM SPLIT-SCREEN DESIGN ENGINE
     # ----------------------------------------------------
     st.html("""
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+    /* Global Canvas Reset */
     .stApp {
-        background: #081120 !important;
+        background: #050B14 !important;
     }
     
-    .splash-container {
+    /* Premium Typography & Layout Variables */
+    h1, h2, h3, p, label, span {
+        font-family: 'Inter', sans-serif !important;
+    }
+    
+    /* Left Panel Aesthetic Sidecard */
+    .design-sidecard {
+        background: linear-gradient(135deg, #0A1626 0%, #050B14 100%);
+        border: 1px solid rgba(212, 162, 76, 0.15);
+        border-radius: 32px;
+        padding: 40px;
         text-align: center;
-        padding-top: 6vh;
-        font-family: 'Inter', sans-serif;
+        box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: 75vh;
     }
     
-    .splash-title {
+    /* Right Panel Context Elements */
+    .content-right {
+        padding: 20px 40px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-height: 75vh;
+    }
+    
+    /* Massive Bold Headings for First Page */
+    .huge-title {
         color: #FFFFFF !important;
-        font-size: 58px !important;
+        font-size: 64px !important;
         font-weight: 900 !important;
-        letter-spacing: -1px !important;
-        margin-top: 15px !important;
-        margin-bottom: 5px !important;
+        letter-spacing: -2px !important;
+        line-height: 1.1 !important;
+        margin-bottom: 12px !important;
     }
     
-    .splash-tagline {
+    .gold-tagline {
         color: #D4A24C !important;
-        font-size: 16px !important;
-        font-weight: 600 !important;
+        font-size: 18px !important;
+        font-weight: 700 !important;
         font-style: italic !important;
-        letter-spacing: 1px !important;
+        letter-spacing: 1.5px !important;
+        line-height: 1.4 !important;
+        text-transform: uppercase;
         margin-bottom: 40px !important;
     }
+
+    /* Massive Headings for Second Page */
+    .transform-title {
+        color: #FFFFFF !important;
+        font-size: 52px !important;
+        font-weight: 800 !important;
+        letter-spacing: -1.5px !important;
+        margin-bottom: 8px !important;
+        line-height: 1.2 !important;
+    }
     
-    /* Medium-sized premium button adjustment */
+    .transform-sub {
+        color: #8A99AD !important;
+        font-size: 18px !important;
+        font-weight: 400 !important;
+        margin-bottom: 35px !important;
+    }
+    
+    /* Premium Solid UI Buttons */
     div.stButton > button {
-        background: linear-gradient(90deg, #D4A24C, #F0C46C) !important;
-        color: #081120 !important;
+        background: linear-gradient(90deg, #D4A24C 0%, #F0C46C 100%) !important;
+        color: #050B14 !important;
         font-weight: 700 !important;
-        font-size: 15px !important;
-        border-radius: 12px !important;
+        font-size: 16px !important;
+        letter-spacing: 0.5px !important;
+        border-radius: 14px !important;
         border: none !important;
-        padding: 10px 20px !important;
-        box-shadow: 0 6px 16px rgba(212,162,76,0.2) !important;
-        transition: all 0.3s ease !important;
+        padding: 14px 28px !important;
+        box-shadow: 0 8px 24px rgba(212,162,76,0.25) !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        width: 100% !important;
     }
     
     div.stButton > button:hover {
-        transform: translateY(-1px) !important;
-        box-shadow: 0 10px 24px rgba(212,162,76,0.35) !important;
-        color: #081120 !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 14px 32px rgba(212,162,76,0.45) !important;
+        color: #050B14 !important;
     }
     
-    label, p, span {
-        color: #E2E8F0 !important;
-    }
-    
-    .stTabs [data-baseweb="tab"] {
-        color: #A0AEC0 !important;
+    /* Overriding Streamlit Form Inputs for Dark Premium Feel */
+    .stTextInput input {
+        background-color: rgba(255, 255, 255, 0.03) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 14px !important;
+        color: #FFFFFF !important;
+        padding: 12px 16px !important;
         font-size: 16px !important;
-        font-weight: 600 !important;
+    }
+    
+    .stTextInput input:focus {
+        border-color: #D4A24C !important;
+        box-shadow: 0 0 0 1px #D4A24C !important;
+    }
+    
+    label {
+        color: #A0AEC0 !important;
+        font-weight: 500 !important;
+        font-size: 14px !important;
+        margin-bottom: 6px !important;
+    }
+    
+    /* Tabs Customization */
+    .stTabs [data-baseweb="tab"] {
+        color: #718096 !important;
+        font-size: 18px !important;
+        font-weight: 700 !important;
+        padding-bottom: 10px !important;
     }
     
     .stTabs [aria-selected="true"] {
         color: #D4A24C !important;
-    }
-    
-    /* Password Eye Toggle Layout Alignment */
-    .pass-container {
-        position: relative;
+        border-bottom-color: #D4A24C !important;
     }
     </style>
     """)
 
     # ----------------------------------------------------
-    # PHASE 1: WELCOME BRAND SPLASH SCREEN
+    # PHASE 1: WELCOME BRAND SPLASH SCREEN (DESIGNER SPLIT)
     # ----------------------------------------------------
     if st.session_state["onboarding_step"] == "splash":
-        st.markdown('<div class="splash-container">', unsafe_allow_html=True)
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        col_left, col_right = st.columns([1.1, 1.3], gap="large")
         
-        logo_filename = "logo.png"
-        
-        if os.path.exists(logo_filename):
-            img = Image.open(logo_filename)
-            _, img_col, _ = st.columns([1, 0.6, 1])
-            with img_col:
-                st.image(img, use_container_width=True)
-        else:
-            st.markdown('<div style="font-size:40px; color:#D4A24C; margin-bottom:20px;">[ LOGO PLACEHOLDER ]</div>', unsafe_allow_html=True)
-
-        st.markdown("""
-            <div class="splash-title">REQ 2 TASK AI</div>
-            <div class="splash-tagline">SMART REQUIREMENTS. INTELLIGENT TASKS. BETTER RESULTS.</div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        _, button_col, _ = st.columns([1, 1.0, 1])
-        with button_col:
-            if st.button("GET STARTED!", use_container_width=True):
+        with col_left:
+            st.markdown('<div class="design-sidecard">', unsafe_allow_html=True)
+            logo_filename = "edited-image.png"
+            if os.path.exists(logo_filename):
+                img = Image.open(logo_filename)
+                st.image(img, width=280)
+            else:
+                st.markdown('<div style="font-size:40px; color:#D4A24C;">[ REQ2TASK LOGO ]</div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+        with col_right:
+            st.markdown('<div class="content-right">', unsafe_allow_html=True)
+            st.markdown('<h1 class="huge-title">REQ 2 TASK AI</h1>', unsafe_allow_html=True)
+            st.markdown('<p class="gold-tagline">SMART REQUIREMENTS. INTELLIGENT TASKS. BETTER RESULTS.</p>', unsafe_allow_html=True)
+            
+            # Form-width matching call to action
+            if st.button("GET STARTED!", key="btn_get_started"):
                 st.session_state["onboarding_step"] = "portal"
                 st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
 
     # ----------------------------------------------------
-    # PHASE 2: ACCESS CONTROL PORTAL (NO EMOJIS + DYNAMIC EYE PASSWORD)
+    # PHASE 2: ACCESS CONTROL PORTAL (SPLIT + IN-BOX PASS EYE)
     # ----------------------------------------------------
     elif st.session_state["onboarding_step"] == "portal":
         st.markdown("<br><br>", unsafe_allow_html=True)
+        col_left, col_right = st.columns([1.1, 1.3], gap="large")
         
-        _, form_col, _ = st.columns([1, 2, 1])
-        with form_col:
-            st.markdown("""
-            <div style="text-align: center; margin-bottom: 25px;">
-                <h2 style='color: white !important; font-weight: 800; margin-bottom: 0;'>READY TO TRANSFORM?</h2>
-                <p style='color: #A0AEC0 !important; font-size: 14px;'>Log into your workspace environment or deploy a fresh instance.</p>
-            </div>
-            """, unsafe_allow_html=True)
+        with col_left:
+            st.markdown('<div class="design-sidecard">', unsafe_allow_html=True)
+            logo_filename = "logo.png"
+            if os.path.exists(logo_filename):
+                img = Image.open(logo_filename)
+                st.image(img, width=280)
+            st.markdown('</div>', unsafe_allow_html=True)
             
-            with st.container(border=True):
-                tab1, tab2 = st.tabs(["Sign In", "Create Account"])
+        with col_right:
+            st.markdown('<div class="content-right">', unsafe_allow_html=True)
+            st.markdown('<h1 class="transform-title">READY TO TRANSFORM?</h1>', unsafe_allow_html=True)
+            st.markdown('<p class="transform-sub">Log into your workspace environment or deploy a fresh instance.</p>', unsafe_allow_html=True)
+            
+            tab1, tab2 = st.tabs(["Sign In", "Create Account"])
+            
+            with tab1:
+                st.markdown("<br>", unsafe_allow_html=True)
+                login_user = st.text_input("Username / Email", key="login_user").strip().lower()
                 
-                with tab1:
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    login_user = st.text_input("Username / Email", key="login_user").strip().lower()
-                    
-                    # Password Input + Dynamic Eye State Toggle Configuration
-                    pass_col, eye_col = st.columns([6, 1])
-                    with pass_col:
-                        login_type = "text" if st.session_state["show_login_pass"] else "password"
-                        login_pass = st.text_input("Password", type=login_type, key="login_pass_field")
-                    with eye_col:
-                        st.markdown("<div style='padding-top:28px;'></div>", unsafe_allow_html=True)
-                        eye_icon = "👁️" if st.session_state["show_login_pass"] else "👁️‍🗨️"
-                        if st.button(eye_icon, key="toggle_login_eye", help="Toggle password view"):
-                            st.session_state["show_login_pass"] = not st.session_state["show_login_pass"]
+                # Dynamic Native Streamlit Password Box (Eye is natively inside the frame right edge!)
+                login_pass = st.text_input("Password", type="password", key="login_pass")
+                
+                st.markdown("<br>", unsafe_allow_html=True)
+                if st.button("Access workspace", key="btn_access_ws"):
+                    if login_user and login_pass:
+                        user_record = users_collection.find_one({"username": login_user})
+                        if user_record and user_record["password"] == hash_password(login_pass):
+                            st.session_state["authenticated"] = True
+                            st.session_state["username"] = login_user
+                            st.success("Authorization Granted. Opening workspace...")
                             st.rerun()
-                            
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    if st.button("Access workspace", use_container_width=True):
-                        if login_user and login_pass:
-                            user_record = users_collection.find_one({"username": login_user})
-                            if user_record and user_record["password"] == hash_password(login_pass):
-                                st.session_state["authenticated"] = True
-                                st.session_state["username"] = login_user
-                                st.success("Authorization Granted. Opening workspace...")
-                                st.rerun()
-                            else:
-                                st.error("Access Denied: Invalid credentials.")
                         else:
-                            st.warning("Please fill in all verification parameters.")
+                            st.error("Access Denied: Invalid credentials.")
+                    else:
+                        st.warning("Please fill in all verification parameters.")
 
-                with tab2:
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    reg_user = st.text_input("Choose Username / Email", key="reg_user").strip().lower()
-                    
-                    # Password Input + Dynamic Eye State Toggle Configuration
-                    reg_pass_col, reg_eye_col = st.columns([6, 1])
-                    with reg_pass_col:
-                        reg_type = "text" if st.session_state["show_reg_pass"] else "password"
-                        reg_pass = st.text_input("Choose Password", type=reg_type, key="reg_pass_field")
-                    with reg_eye_col:
-                        st.markdown("<div style='padding-top:28px;'></div>", unsafe_allow_html=True)
-                        reg_eye_icon = "👁️" if st.session_state["show_reg_pass"] else "👁️‍🗨️"
-                        if st.button(reg_eye_icon, key="toggle_reg_eye", help="Toggle password view"):
-                            st.session_state["show_reg_pass"] = not st.session_state["show_reg_pass"]
-                            st.rerun()
-                            
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    if st.button("Create workspace", use_container_width=True):
-                        if reg_user and reg_pass:
-                            existing_user = users_collection.find_one({"username": reg_user})
-                            if existing_user:
-                                st.error("Account registration blocked: Username already exists.")
-                            else:
-                                users_collection.insert_one({
+            with tab2:
+                st.markdown("<br>", unsafe_allow_html=True)
+                reg_user = st.text_input("Choose Username / Email", key="reg_user").strip().lower()
+                
+                # Dynamic Native Streamlit Password Box
+                reg_pass = st.text_input("Choose Password", type="password", key="reg_pass")
+                
+                st.markdown("<br>", unsafe_allow_html=True)
+                if st.button("Create workspace", key="btn_create_ws"):
+                    if reg_user and reg_pass:
+                        existing_user = users_collection.find_one({"username": reg_user})
+                        if existing_user:
+                            st.error("Account registration blocked: Username already exists.")
+                        else:
+                            users_collection.insert_one({
                                     "username": reg_user,
                                     "password": hash_password(reg_pass)
                                 })
-                                st.success("Workspace provisioned! Proceed to Sign In tab.")
-                        else:
-                            st.warning("Please define all structural configurations.")
+                            st.success("Workspace provisioned! Proceed to Sign In tab.")
+                    else:
+                        st.warning("Please define all structural configurations.")
+            st.markdown('</div>', unsafe_allow_html=True)
