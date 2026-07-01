@@ -180,7 +180,7 @@ st.sidebar.markdown("---")
 st.sidebar.html("""
 <form method="get" action="">
     <button type="submit" name="custom_logout_trigger" value="true" class="sidebar-master-logout-btn">
-        🚪 Log Out
+        Log Out
     </button>
 </form>
 
@@ -210,7 +210,7 @@ st.sidebar.html("""
 """)
 
 # Catch the HTML form submission click event seamlessly
-if st.context. some_query_params.get("custom_logout_trigger") == "true" or st.query_params.get("custom_logout_trigger") == "true":
+if st.query_params.get("custom_logout_trigger") == "true":
     # Clear the query param instantly so it doesn't loop logouts
     st.query_params.clear()
     st.session_state["authenticated"] = False
