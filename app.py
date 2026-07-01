@@ -172,42 +172,51 @@ page = st.sidebar.radio(
     ]
 )
 # ----------------------------------------------------
-# FIXED GLOBAL LOGOUT BUTTON & CSS THEME LOCK
+# FIXED UNIFIED LOGOUT SYSTEM (BULLETPROOF BYPASS)
 # ----------------------------------------------------
 st.sidebar.markdown("---")
 
-# This CSS fixes the button state, the text color, and forces it to behave on the dashboard tab
-st.markdown("""
+# Use st.sidebar.html to create a completely custom, un-overridable button
+st.sidebar.html("""
+<form method="get" action="">
+    <button type="submit" name="custom_logout_trigger" value="true" class="sidebar-master-logout-btn">
+        🚪 Log Out
+    </button>
+</form>
+
 <style>
-/* Targeting the specific sidebar button element structural container */
-div[data-testid="stSidebar"] div.stElementContainer div.stButton > button {
-    background-color: #1E293B !important;   /* Solid dark slate background */
-    color: #FFFFFF !important;              /* Crisp white text that NEVER disappears */
+.sidebar-master-logout-btn {
+    background-color: #1E293B !important;
+    color: #FFFFFF !important;
+    font-family: 'Inter', sans-serif !important;
     font-weight: 700 !important;
     font-size: 14px !important;
-    border: 1px solid #334155 !important;   /* Subtle clean border outline */
+    border: 1px solid #334155 !important;
     border-radius: 10px !important;
-    padding: 10px 20px !important;
-    width: 100% !important;                 /* Forces full sidebar width on all pages */
+    padding: 12px 20px !important;
+    width: 100% !important;
     display: block !important;
-    margin: 10px 0 !important;
+    cursor: pointer !important;
+    text-align: center !important;
     transition: all 0.2s ease-in-out !important;
 }
 
-/* Hover-only effect: Turns red cleanly when your cursor touches it */
-div[data-testid="stSidebar"] div.stElementContainer div.stButton > button:hover {
-    background-color: #EF4444 !important;   /* Premium crimson red color */
-    color: #FFFFFF !important;              /* Keep text white on hover */
+.sidebar-master-logout-btn:hover {
+    background-color: #EF4444 !important;
+    color: #FFFFFF !important;
     border-color: #EF4444 !important;
 }
 </style>
-""", unsafe_allow_html=True)
+""")
 
-# Functional layout handler wrapper
-if st.sidebar.button("Log Out", use_container_width=True, key="sidebar_logout_global"):
+# Catch the HTML form submission click event seamlessly
+if st.context. some_query_params.get("custom_logout_trigger") == "true" or st.query_params.get("custom_logout_trigger") == "true":
+    # Clear the query param instantly so it doesn't loop logouts
+    st.query_params.clear()
     st.session_state["authenticated"] = False
     st.session_state["username"] = None
     st.rerun()
+
 # ---------------------------------
 # HEADER
 # ---------------------------------
