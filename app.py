@@ -492,16 +492,31 @@ if page == "Dashboard":
     # RECENT PROJECTS FOOTER SECTION (ALWAYS VISIBLE)
     st.markdown("""<h2 style="color:#0B1F3A; margin-bottom:20px;">Recent Projects</h2>""", unsafe_allow_html=True)
 
-    if len(projects) == 0:
+    # Force cast the cursor into a proper Python list to safely read its length and slice it
+    safe_projects = list(projects)
+
+    if len(safe_projects) == 0:
         st.info("No projects available.")
     else:
-        for project in reversed(projects[-5:]):
+        # Grabs up to the last 5 projects safely and reverses them for recent view
+        recent_items = safe_projects[-5:]
+        recent_items.reverse()
+
+        for project in recent_items:
             tasks = project.get("tasks", [])
             total = len(tasks)
             completed = len([t for t in tasks if t.get("status", False)])
             progress = 0 if total == 0 else int((completed / total) * 100)
 
-            st.markdown(f"""<div style="background:white; border-radius:25px; padding:25px; margin-bottom:18px; box-shadow:0 8px 30px rgba(0,0,0,0.07);"><h4 style="margin-bottom:8px; color:#0B1F3A;">{project.get("document_name","Untitled Project")}</h4><p style="color:#6B7280;">{total} Tasks &nbsp;&nbsp;|&nbsp;&nbsp; {completed} Completed</p><div style="width:100%; height:10px; background:#ECECEC; border-radius:20px; overflow:hidden; margin-top:12px;"><div style="width:{progress}%; height:10px; background:#D4A24C;"></div></div><p style="margin-top:12px; color:#6B7280;">Progress : <b>{progress}%</b></p></div>""", unsafe_allow_html=True)
+            # --- YOUR CUSTOM DESIGN HTML CARD RNDERING STARTS HERE ---
+            st.markdown(f"""
+                <div style="background:white; border-radius:25px; padding:25px; margin-bottom:18px; box-shadow:0 8px 30px rgba(0,0,0,0.07);">
+                    <h4 style="margin:0 0 10px 0; color:#0B1F3A;">📁 {project.get('document_name', 'Untitled Project')}</h4>
+                    <p style="margin:0; color:#64748B; font-size:14px;">
+                        Progress: <strong>{progress}%</strong> ({completed}/{total} Tasks Completed)
+                    </p>
+                </div>
+            """, unsafe_allow_html=True)
 # ==========================================
 # UPLOAD PAGE
 # ==========================================
