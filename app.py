@@ -234,6 +234,42 @@ button[data-testid*="ollaps" i]:hover::before {
     transition: transform 0.2s ease-in-out !important;
 }
 
+/* ==================================================== */
+/* CLICKABLE DASHBOARD CARDS (WHOLE-CARD TOGGLE)        */
+/* ==================================================== */
+/* Same technique as the Team Member cards above, scoped
+   to dash_card_0 through dash_card_3 only. This replaces an
+   older unscoped rule that matched every button on every page
+   and broke other pages' click areas once visited. */
+[class*="st-key-dash_card_"] {
+    position: relative !important;
+}
+[class*="st-key-dash_card_"] div.stButton {
+    position: absolute !important;
+    inset: 0 !important;
+    margin: 0 !important;
+    z-index: 3 !important;
+}
+[class*="st-key-dash_card_"] div.stButton > button {
+    width: 100% !important;
+    height: 100% !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: transparent !important;
+    font-size: 0 !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+}
+[class*="st-key-dash_card_"] div.stButton > button:hover,
+[class*="st-key-dash_card_"] div.stButton > button:focus,
+[class*="st-key-dash_card_"] div.stButton > button:active {
+    background: transparent !important;
+    border: none !important;
+    color: transparent !important;
+    box-shadow: none !important;
+}
+
 
 
 
@@ -415,54 +451,6 @@ if page == "Dashboard":
     project_count = collection.count_documents({"username": st.session_state["username"]})
 
     # ----------------------------------------------------
-    # ADVANCED CONTAINER OVERLAY CSS (Eliminates Code Strings & Empty Boxes)
-    # ----------------------------------------------------
-    st.markdown("""
-    <style>
-    /* Make each column an isolation context for precise overlay tracking */
-    div[data-testid="stHorizontalBlock"] > div[data-testid="stVerticalBlock"] {
-        position: relative !important;
-        display: flex !important;
-        flex-direction: column !important;
-    }
-
-    /* Transform the empty native buttons into fully transparent overlay sheets */
-    div[data-testid="stVerticalBlock"] div[data-testid="stButton"] button {
-        position: absolute !important;
-        top: -185px !important; /* Move up to precisely match the height of the card above it */
-        left: 0 !important;
-        width: 100% !important;
-        height: 185px !important;
-        background: transparent !important;
-        border: none !important;
-        color: transparent !important;
-        box-shadow: none !important;
-        z-index: 100 !important;
-        cursor: pointer !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-
-    /* Prevent Streamlit layout shifting or hover/focus artifacts on invisible overlays */
-    div[data-testid="stVerticalBlock"] div[data-testid="stButton"] button:hover,
-    div[data-testid="stVerticalBlock"] div[data-testid="stButton"] button:focus,
-    div[data-testid="stVerticalBlock"] div[data-testid="stButton"] button:active {
-        background: transparent !important;
-        border: none !important;
-        color: transparent !important;
-        box-shadow: none !important;
-    }
-
-    /* Force the empty button block wrapper to occupy zero layout space beneath the card */
-    div[data-testid="stVerticalBlock"] div[data-testid="stButton"] {
-        height: 0px !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    # ----------------------------------------------------
     # 4 PREMIUM INTERACTIVE CARDS (ROBUST HTML + OVERLAY)
     # ----------------------------------------------------
     c1, c2, c3, c4 = st.columns(4)
@@ -471,65 +459,69 @@ if page == "Dashboard":
         is_active = st.session_state.dashboard_card == "tasks"
         border_style = "border: 3px solid #D4A24C; box-shadow: 0 12px 40px rgba(212,162,76,0.25);" if is_active else "border-top: 5px solid #D4A24C; box-shadow: 0 10px 35px rgba(0,0,0,0.08);"
         
-        st.markdown(f"""
-        <div style="background:white; border-radius:28px; padding:28px; height:185px; {border_style} transition: all 0.3s ease;">
-            <p style="color:#6B7280; font-size:13px; font-weight:600; letter-spacing:1px; text-transform:uppercase; margin:0;">TOTAL TASKS</p>
-            <h1 style="margin-top:14px; margin-bottom:0; font-size:44px; color:#22C55E; font-weight:700; line-height:1;">{total_tasks}</h1>
-            <p style="color:#9CA3AF; font-size:14px; margin-top:8px; margin-bottom:0;">AI Generated Tasks</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        if st.button("", key="action_trigger_tasks", use_container_width=True):
-            st.session_state.dashboard_card = "overview" if is_active else "tasks"
-            st.rerun()
+        with st.container(key="dash_card_0"):
+            st.markdown(f"""
+            <div style="background:white; border-radius:28px; padding:28px; height:185px; {border_style} transition: all 0.3s ease;">
+                <p style="color:#6B7280; font-size:13px; font-weight:600; letter-spacing:1px; text-transform:uppercase; margin:0;">TOTAL TASKS</p>
+                <h1 style="margin-top:14px; margin-bottom:0; font-size:44px; color:#22C55E; font-weight:700; line-height:1;">{total_tasks}</h1>
+                <p style="color:#9CA3AF; font-size:14px; margin-top:8px; margin-bottom:0;">AI Generated Tasks</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            if st.button("", key="action_trigger_tasks", use_container_width=True):
+                st.session_state.dashboard_card = "overview" if is_active else "tasks"
+                st.rerun()
 
     with c2:
         is_active = st.session_state.dashboard_card == "completed"
         border_style = "border: 3px solid #D4A24C; box-shadow: 0 12px 40px rgba(212,162,76,0.25);" if is_active else "border-top: 5px solid #D4A24C; box-shadow: 0 10px 35px rgba(0,0,0,0.08);"
         
-        st.markdown(f"""
-        <div style="background:white; border-radius:28px; padding:28px; height:185px; {border_style} transition: all 0.3s ease;">
-            <p style="color:#6B7280; font-size:13px; font-weight:600; letter-spacing:1px; text-transform:uppercase; margin:0;">COMPLETED</p>
-            <h1 style="margin-top:14px; margin-bottom:0; font-size:44px; color:#16A34A; font-weight:700; line-height:1;">{completed_tasks}</h1>
-            <p style="color:#9CA3AF; font-size:14px; margin-top:8px; margin-bottom:0;">Successfully Finished</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        if st.button("", key="action_trigger_completed", use_container_width=True):
-            st.session_state.dashboard_card = "overview" if is_active else "completed"
-            st.rerun()
+        with st.container(key="dash_card_1"):
+            st.markdown(f"""
+            <div style="background:white; border-radius:28px; padding:28px; height:185px; {border_style} transition: all 0.3s ease;">
+                <p style="color:#6B7280; font-size:13px; font-weight:600; letter-spacing:1px; text-transform:uppercase; margin:0;">COMPLETED</p>
+                <h1 style="margin-top:14px; margin-bottom:0; font-size:44px; color:#16A34A; font-weight:700; line-height:1;">{completed_tasks}</h1>
+                <p style="color:#9CA3AF; font-size:14px; margin-top:8px; margin-bottom:0;">Successfully Finished</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            if st.button("", key="action_trigger_completed", use_container_width=True):
+                st.session_state.dashboard_card = "overview" if is_active else "completed"
+                st.rerun()
 
     with c3:
         is_active = st.session_state.dashboard_card == "priority"
         border_style = "border: 3px solid #D4A24C; box-shadow: 0 12px 40px rgba(212,162,76,0.25);" if is_active else "border-top: 5px solid #D4A24C; box-shadow: 0 10px 35px rgba(0,0,0,0.08);"
         
-        st.markdown(f"""
-        <div style="background:white; border-radius:28px; padding:28px; height:185px; {border_style} transition: all 0.3s ease;">
-            <p style="color:#6B7280; font-size:13px; font-weight:600; letter-spacing:1px; text-transform:uppercase; margin:0;">HIGH PRIORITY</p>
-            <h1 style="margin-top:14px; margin-bottom:0; font-size:44px; color:#F59E0B; font-weight:700; line-height:1;">{high_tasks}</h1>
-            <p style="color:#9CA3AF; font-size:14px; margin-top:8px; margin-bottom:0;">Needs Attention</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        if st.button("", key="action_trigger_priority", use_container_width=True):
-            st.session_state.dashboard_card = "overview" if is_active else "priority"
-            st.rerun()
+        with st.container(key="dash_card_2"):
+            st.markdown(f"""
+            <div style="background:white; border-radius:28px; padding:28px; height:185px; {border_style} transition: all 0.3s ease;">
+                <p style="color:#6B7280; font-size:13px; font-weight:600; letter-spacing:1px; text-transform:uppercase; margin:0;">HIGH PRIORITY</p>
+                <h1 style="margin-top:14px; margin-bottom:0; font-size:44px; color:#F59E0B; font-weight:700; line-height:1;">{high_tasks}</h1>
+                <p style="color:#9CA3AF; font-size:14px; margin-top:8px; margin-bottom:0;">Needs Attention</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            if st.button("", key="action_trigger_priority", use_container_width=True):
+                st.session_state.dashboard_card = "overview" if is_active else "priority"
+                st.rerun()
 
     with c4:
         is_active = st.session_state.dashboard_card == "projects"
         border_style = "border: 3px solid #D4A24C; box-shadow: 0 12px 40px rgba(212,162,76,0.25);" if is_active else "border-top: 5px solid #D4A24C; box-shadow: 0 10px 35px rgba(0,0,0,0.08);"
         
-        st.markdown(f"""
-        <div style="background:white; border-radius:28px; padding:28px; height:185px; {border_style} transition: all 0.3s ease;">
-            <p style="color:#6B7280; font-size:13px; font-weight:600; letter-spacing:1px; text-transform:uppercase; margin:0;">PROJECTS</p>
-            <h1 style="margin-top:14px; margin-bottom:0; font-size:44px; color:#3B82F6; font-weight:700; line-height:1;">{project_count}</h1>
-            <p style="color:#9CA3AF; font-size:14px; margin-top:8px; margin-bottom:0;">Stored in MongoDB</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        if st.button("", key="action_trigger_projects", use_container_width=True):
-            st.session_state.dashboard_card = "overview" if is_active else "projects"
-            st.rerun()
+        with st.container(key="dash_card_3"):
+            st.markdown(f"""
+            <div style="background:white; border-radius:28px; padding:28px; height:185px; {border_style} transition: all 0.3s ease;">
+                <p style="color:#6B7280; font-size:13px; font-weight:600; letter-spacing:1px; text-transform:uppercase; margin:0;">PROJECTS</p>
+                <h1 style="margin-top:14px; margin-bottom:0; font-size:44px; color:#3B82F6; font-weight:700; line-height:1;">{project_count}</h1>
+                <p style="color:#9CA3AF; font-size:14px; margin-top:8px; margin-bottom:0;">Stored in MongoDB</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            if st.button("", key="action_trigger_projects", use_container_width=True):
+                st.session_state.dashboard_card = "overview" if is_active else "projects"
+                st.rerun()
 
     st.markdown("<br>", unsafe_allow_html=True)
 
