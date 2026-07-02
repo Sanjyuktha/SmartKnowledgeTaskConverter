@@ -27,6 +27,43 @@ st.set_page_config(
 )
 
 # ---------------------------------
+# GLOBAL CLICK-FORWARDING SCRIPT
+# ---------------------------------
+# Makes entire cards clickable (Dashboard cards + Team Member cards) by
+# listening for any click inside a card and forwarding it to the real
+# (visually hidden) Streamlit button inside that same card. This is more
+# reliable than trying to stack an invisible button pixel-perfectly over
+# the card with CSS, since it doesn't depend on exact positioning/z-index -
+# it just asks "was this click anywhere inside the card container?"
+#
+# Bound once on `document` with event delegation, so it keeps working even
+# as Streamlit re-renders cards on every rerun (the listener itself never
+# gets removed, since `document` persists across reruns).
+st.html(r"""
+<script>
+(function() {
+    if (window.__cardClickDelegationBound) { return; }
+    window.__cardClickDelegationBound = true;
+
+    document.addEventListener('click', function(e) {
+        // Don't intercept clicks on the real button itself (avoid double-fire)
+        if (e.target.closest('button')) { return; }
+
+        const card = e.target.closest(
+            '[class*="st-key-member_card_"], [class*="st-key-dash_card_"]'
+        );
+        if (!card) { return; }
+
+        const btn = card.querySelector('button');
+        if (btn) {
+            btn.click();
+        }
+    }, true);
+})();
+</script>
+""")
+
+# ---------------------------------
 # CSS
 # ---------------------------------
 st.markdown("""
@@ -198,36 +235,28 @@ button[data-testid*="ollaps" i]:hover::before {
 /* ==================================================== */
 /* CLICKABLE TEAM MEMBER CARDS (WHOLE-CARD TOGGLE)      */
 /* ==================================================== */
-/* Each member card container gets its own key like
-   "member_card_0", "member_card_1"... - target all of them
-   generically via substring match so this works regardless
-   of how many team members exist. */
+/* The actual click detection now happens via JavaScript
+   (see the script injected further below), which listens for
+   clicks anywhere on the card and forwards them to the real
+   button. This CSS just needs to visually hide the button -
+   it no longer needs to be pixel-perfectly stretched over the
+   card, which is what made the old approach fragile. */
 [class*="st-key-member_card_"] {
-    position: relative !important;
-}
-
-/* Stretch the button's wrapping div over the entire card */
-[class*="st-key-member_card_"] div.stButton {
-    position: absolute !important;
-    inset: 0 !important;
-    margin: 0 !important;
-    z-index: 3 !important;
-}
-
-/* Make the button itself invisible but fully clickable, and
-   give a subtle lift-on-hover so it still feels interactive
-   even though there's no visible button */
-[class*="st-key-member_card_"] div.stButton > button {
-    width: 100% !important;
-    height: 100% !important;
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    color: transparent !important;
-    font-size: 0 !important;
     cursor: pointer !important;
+}
+[class*="st-key-member_card_"] div.stButton {
+    height: 0 !important;
+    overflow: hidden !important;
+    margin: 0 !important;
     padding: 0 !important;
-    transform: none !important;
+}
+[class*="st-key-member_card_"] div.stButton > button {
+    height: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
 }
 [class*="st-key-member_card_"]:hover {
     transform: translateY(-3px) !important;
@@ -237,36 +266,23 @@ button[data-testid*="ollaps" i]:hover::before {
 /* ==================================================== */
 /* CLICKABLE DASHBOARD CARDS (WHOLE-CARD TOGGLE)        */
 /* ==================================================== */
-/* Same technique as the Team Member cards above, scoped
-   to dash_card_0 through dash_card_3 only. This replaces an
-   older unscoped rule that matched every button on every page
-   and broke other pages' click areas once visited. */
+/* Same simplified approach as the Team Member cards above,
+   scoped to dash_card_0 through dash_card_3 only. */
 [class*="st-key-dash_card_"] {
-    position: relative !important;
+    cursor: pointer !important;
 }
 [class*="st-key-dash_card_"] div.stButton {
-    position: absolute !important;
-    inset: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
     margin: 0 !important;
-    z-index: 3 !important;
-}
-[class*="st-key-dash_card_"] div.stButton > button {
-    width: 100% !important;
-    height: 100% !important;
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    color: transparent !important;
-    font-size: 0 !important;
-    cursor: pointer !important;
     padding: 0 !important;
 }
-[class*="st-key-dash_card_"] div.stButton > button:hover,
-[class*="st-key-dash_card_"] div.stButton > button:focus,
-[class*="st-key-dash_card_"] div.stButton > button:active {
-    background: transparent !important;
+[class*="st-key-dash_card_"] div.stButton > button {
+    height: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
     border: none !important;
-    color: transparent !important;
+    background: transparent !important;
     box-shadow: none !important;
 }
 
