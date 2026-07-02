@@ -71,22 +71,29 @@ def _inject_global_styles():
         height: 100%;
     }
 
-    /* LEFT DISPLAY PANE - LOGO & FEATURE GRID */
+    /* LEFT DISPLAY PANE - MATCHED EXACTLY TO LOGO ASSET BACKGROUND */
     .st-key-left_pane {
-        background: radial-gradient(circle at 30% 30%, rgba(212, 162, 76, 0.1) 0%, transparent 60%), #0A0F1A !important;
-        border-right: 1px solid rgba(255, 255, 255, 0.05);
+        background: #121212 !important; /* Perfect hex color match to your cropped image background */
+        border-right: 1px solid rgba(255, 255, 255, 0.03);
         display: flex;
         flex-direction: column;
         justify-content: space-between;
         align-items: center;
         height: 100%;
         min-height: 75vh;
-        padding: 50px !important;
+        padding: 40px !important;
+        border-top-left-radius: 30px !important;
+        border-bottom-left-radius: 30px !important;
     }
 
-    /* Target logo images inside the left pane and strip away the dark background box edges */
+    /* Pristine logo layout framing with rounded bounds matching the panel curve */
     .st-key-left_pane img, [data-testid="stImage"] img {
-        mix-blend-mode: screen !important;
+        max-width: 100% !important;
+        height: auto !important;
+        border-radius: 20px !important;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.5) !important;
+        display: block !important;
+        margin: 0 auto !important;
     }
 
     /* RIGHT DISPLAY PANE - INTERACTIVE CONTROL GATE */
@@ -358,11 +365,12 @@ def _inject_global_styles():
             border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
             padding: 40px 20px !important;
             min-height: auto !important;
+            border-radius: 30px !important;
         }
         .st-key-left_pane img, [data-testid="stImage"] img {
-            max-width: 50% !important;
+            max-width: 65% !important;
             margin: 0 auto !important;
-            mix-blend-mode: screen !important;
+            border-radius: 16px !important;
         }
         .feature-icon-row {
             display: grid !important;
