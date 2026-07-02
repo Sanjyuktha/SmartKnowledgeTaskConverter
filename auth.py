@@ -287,6 +287,32 @@ def _inject_global_styles():
         color: #FFFFFF !important;
     }
 
+    /* ---------- SWITCH-MODE INLINE TEXT LINK ---------- */
+    .st-key-switch_mode_btn {
+        text-align: center !important;
+        margin-top: 10px !important;
+    }
+    .st-key-switch_mode_btn div.stButton > button {
+        background: transparent !important;
+        color: #8A98A8 !important;
+        border: none !important;
+        box-shadow: none !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        text-transform: none !important;
+        letter-spacing: 0 !important;
+        padding: 4px 8px !important;
+        width: auto !important;
+        margin: 0 auto !important;
+    }
+    .st-key-switch_mode_btn div.stButton > button:hover {
+        color: #D4A24C !important;
+        background: transparent !important;
+        transform: none !important;
+        box-shadow: none !important;
+        text-decoration: underline !important;
+    }
+
     /* ---------- BOTTOM FOOTER HORIZONTAL TECH TAGS ---------- */
     .tech-footer-container {
         display: flex !important;
@@ -376,6 +402,9 @@ def _inject_global_styles():
        RESPONSIVE MATRIX ADJUSTMENTS FOR MOBILE VIEWPORTS
        ==================================================== */
     @media (max-width: 992px) {
+        .main .block-container {
+            padding: 3vh 4vw !important;
+        }
         div[data-testid="stHorizontalBlock"] {
             flex-direction: column !important;
         }
@@ -383,38 +412,54 @@ def _inject_global_styles():
             width: 100% !important;
             flex: 1 1 100% !important;
         }
+        .st-key-master_card {
+            border-radius: 26px !important;
+        }
         .st-key-left_pane {
             border-right: none !important;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-            padding: 40px 20px !important;
+            padding: 32px 20px !important;
             min-height: auto !important;
-            border-radius: 30px !important;
+            border-radius: 26px 26px 0 0 !important;
         }
         .st-key-left_pane img, [data-testid="stImage"] img {
-            max-width: 65% !important;
+            max-width: 55% !important;
             margin: 0 auto !important;
             border-radius: 0 !important;
         }
         .feature-icon-row {
             display: grid !important;
             grid-template-columns: repeat(2, 1fr) !important;
-            gap: 20px !important;
+            gap: 22px 16px !important;
+            margin-top: 28px !important;
         }
         .st-key-right_pane {
-            padding: 40px 20px !important;
+            padding: 36px 22px !important;
             min-height: auto !important;
         }
         .main-logo-heading {
-            font-size: 38px !important;
+            font-size: 34px !important;
+            text-align: center !important;
+        }
+        .welcome-text {
             text-align: center !important;
         }
         .sub-tagline-desc {
             text-align: center !important;
             font-size: 14px !important;
         }
+        .portal-core-title {
+            white-space: normal !important;
+            text-align: center !important;
+            font-size: clamp(22px, 6vw, 30px) !important;
+        }
+        .portal-core-sub {
+            text-align: center !important;
+        }
         .tech-footer-container {
             flex-direction: column !important;
             gap: 15px !important;
+            align-items: flex-start !important;
         }
         .ai-badge {
             position: relative !important;
@@ -484,6 +529,7 @@ def _render_splash_pane():
     )
     
     if st.button("🚀 Get Started", key="splash_onboarding_action_trigger"):
+        st.session_state["auth_mode"] = "signup"
         st.session_state["onboarding_step"] = "portal"
         st.rerun()
         
@@ -491,6 +537,7 @@ def _render_splash_pane():
     
     with st.container(key="sec_action_btn"):
         if st.button("👤 Sign In To Account", key="splash_direct_login_trigger"):
+            st.session_state["auth_mode"] = "login"
             st.session_state["onboarding_step"] = "portal"
             st.rerun()
 
@@ -519,15 +566,15 @@ def _render_portal_pane():
             st.session_state["onboarding_step"] = "splash"
             st.rerun()
 
-    st.markdown('<h1 class="portal-core-title">READY TO TRANSFORM?</h1>', unsafe_allow_html=True)
-    st.markdown(
-        '<p class="portal-core-sub">Log into your workspace environment or deploy a fresh instance.</p>',
-        unsafe_allow_html=True,
-    )
+    mode = st.session_state.get("auth_mode", "login")
 
-    tab1, tab2 = st.tabs(["Sign In", "Create Account"])
+    if mode == "login":
+        st.markdown('<h1 class="portal-core-title">WELCOME BACK</h1>', unsafe_allow_html=True)
+        st.markdown(
+            '<p class="portal-core-sub">Log into your existing workspace environment.</p>',
+            unsafe_allow_html=True,
+        )
 
-    with tab1:
         st.markdown("<br>", unsafe_allow_html=True)
         login_user = st.text_input("Username / Email", key="login_user").strip().lower()
         login_pass = st.text_input("Password", type="password", key="login_pass")
@@ -545,7 +592,18 @@ def _render_portal_pane():
             else:
                 st.warning("Please fill in all parameters.")
 
-    with tab2:
+        with st.container(key="switch_mode_btn"):
+            if st.button("Don't have an account? Create one", key="switch_to_signup"):
+                st.session_state["auth_mode"] = "signup"
+                st.rerun()
+
+    else:
+        st.markdown('<h1 class="portal-core-title">CREATE YOUR WORKSPACE</h1>', unsafe_allow_html=True)
+        st.markdown(
+            '<p class="portal-core-sub">Deploy a fresh workspace instance in seconds.</p>',
+            unsafe_allow_html=True,
+        )
+
         st.markdown("<br>", unsafe_allow_html=True)
         reg_user = st.text_input("Choose Username / Email", key="reg_user").strip().lower()
         reg_pass = st.text_input("Choose Password", type="password", key="reg_pass")
@@ -561,8 +619,15 @@ def _render_portal_pane():
                         "password": hash_password(reg_pass),
                     })
                     st.success("Workspace created! Please Sign In.")
+                    st.session_state["auth_mode"] = "login"
+                    st.rerun()
             else:
                 st.warning("Please fill in all fields.")
+
+        with st.container(key="switch_mode_btn"):
+            if st.button("Already have an account? Sign in", key="switch_to_login"):
+                st.session_state["auth_mode"] = "login"
+                st.rerun()
 
 
 # ----------------------------------------------------
@@ -573,6 +638,8 @@ def render_login_signup():
 
     if "onboarding_step" not in st.session_state:
         st.session_state["onboarding_step"] = "splash"
+    if "auth_mode" not in st.session_state:
+        st.session_state["auth_mode"] = "login"
 
     _inject_global_styles()
 
