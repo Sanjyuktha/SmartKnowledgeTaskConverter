@@ -71,10 +71,11 @@ def _inject_global_styles():
         height: 100%;
     }
 
-    /* LEFT DISPLAY PANE - MATCHED EXACTLY TO LOGO ASSET BACKGROUND */
+    /* LEFT DISPLAY PANE - now blends seamlessly into the right pane's navy tone
+       instead of using a mismatched flat gray, removing the visible seam */
     .st-key-left_pane {
-        background: #121212 !important; /* Perfect hex color match to your cropped image background */
-        border-right: 1px solid rgba(255, 255, 255, 0.03);
+        background: radial-gradient(ellipse at 30% 20%, #131B2C 0%, #0B111E 55%, #080C14 100%) !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.015);
         display: flex;
         flex-direction: column;
         justify-content: space-between;
@@ -84,16 +85,38 @@ def _inject_global_styles():
         padding: 40px !important;
         border-top-left-radius: 30px !important;
         border-bottom-left-radius: 30px !important;
+        position: relative;
+        overflow: hidden;
     }
 
-    /* Pristine logo layout framing with rounded bounds matching the panel curve */
+    /* Soft ambient gold glow behind the logo so its edges dissolve into the
+       panel instead of ending in a hard rectangle */
+    .st-key-left_pane::before {
+        content: "" !important;
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        width: 420px !important;
+        height: 420px !important;
+        transform: translate(-50%, -50%) !important;
+        background: radial-gradient(circle, rgba(212, 162, 76, 0.14) 0%, rgba(212, 162, 76, 0) 70%) !important;
+        pointer-events: none !important;
+        z-index: 0 !important;
+    }
+
+    /* Pristine logo layout framing - now flush with the panel, no card frame,
+       and blended via mix-blend-mode so the PNG's own dark background
+       dissolves into the surrounding gradient instead of showing a seam */
     .st-key-left_pane img, [data-testid="stImage"] img {
-        max-width: 100% !important;
+        max-width: 82% !important;
         height: auto !important;
-        border-radius: 20px !important;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.5) !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
         display: block !important;
         margin: 0 auto !important;
+        position: relative !important;
+        z-index: 1 !important;
+        mix-blend-mode: lighten !important;
     }
 
     /* RIGHT DISPLAY PANE - INTERACTIVE CONTROL GATE */
@@ -370,7 +393,7 @@ def _inject_global_styles():
         .st-key-left_pane img, [data-testid="stImage"] img {
             max-width: 65% !important;
             margin: 0 auto !important;
-            border-radius: 16px !important;
+            border-radius: 0 !important;
         }
         .feature-icon-row {
             display: grid !important;
