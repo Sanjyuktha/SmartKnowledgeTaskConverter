@@ -89,8 +89,11 @@ div[data-testid="collapsedControl"] button {
 
 /* Hide the default double-arrow SVG icon completely in BOTH states */
 section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button svg,
-div[data-testid="collapsedControl"] button svg {
+section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button svg path,
+div[data-testid="collapsedControl"] button svg,
+div[data-testid="collapsedControl"] button svg path {
     display: none !important;
+    opacity: 0 !important;
 }
 
 /* Inject the standard 3-line hamburger icon instead */
