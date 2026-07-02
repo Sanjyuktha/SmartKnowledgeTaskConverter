@@ -197,18 +197,33 @@ def _inject_global_styles():
 
     /* ---------- INPUT MATRIX STYLING ---------- */
     .stTextInput input {
-        background-color: rgba(255, 255, 255, 0.03) !important;
+        background-color: #EDEFF2 !important;
         border: 1px solid rgba(255, 255, 255, 0.08) !important;
         border-radius: 14px !important;
-        color: #FFFFFF !important;
+        color: #0B111E !important;
         padding: 14px 16px !important;
         font-size: 15px !important;
         transition: all 0.3s ease !important;
+        caret-color: #0B111E !important;
+    }
+    .stTextInput input::placeholder {
+        color: #6B7684 !important;
+        opacity: 1 !important;
     }
     .stTextInput input:focus {
         border-color: #D4A24C !important;
         box-shadow: 0 0 0 1px #D4A24C !important;
-        background-color: rgba(255, 255, 255, 0.05) !important;
+        background-color: #F5F6F8 !important;
+    }
+    /* Browser autofill (especially on mobile) tries to inject its own
+       background/text colors - this forces it to match our theme instead */
+    .stTextInput input:-webkit-autofill,
+    .stTextInput input:-webkit-autofill:hover,
+    .stTextInput input:-webkit-autofill:focus {
+        -webkit-text-fill-color: #0B111E !important;
+        -webkit-box-shadow: 0 0 0 1000px #EDEFF2 inset !important;
+        box-shadow: 0 0 0 1000px #EDEFF2 inset !important;
+        caret-color: #0B111E !important;
     }
     label {
         color: #8A98A8 !important;
