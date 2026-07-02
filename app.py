@@ -84,9 +84,11 @@ section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button 
 }
 
 /* 2. Target the button when the sidebar is CLOSED
-   Using substring + case-insensitive matching because Streamlit has
-   shipped this testid under slightly different names across versions
-   (collapsedControl, stSidebarCollapsedControl, etc.) */
+   CONFIRMED for Streamlit 1.58: data-testid="stExpandSidebarButton"
+   (the old "collapsedControl" name is pre-1.38 and no longer used).
+   Fallback wildcards kept in case of future renames. */
+[data-testid="stExpandSidebarButton"],
+[data-testid="stExpandSidebarButton"] button,
 div[data-testid="collapsedControl"] button,
 div[data-testid*="ollapsedControl" i] button,
 div[data-testid*="ollapsedControl" i] [role="button"],
@@ -104,6 +106,8 @@ button[data-testid*="ollaps" i] {
    font-size:0 above already blanks text; this also strips visual paint
    from any element type so nothing can render underneath the hamburger. */
 section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button > *,
+[data-testid="stExpandSidebarButton"] > *,
+[data-testid="stExpandSidebarButton"] button > *,
 div[data-testid="collapsedControl"] button > *,
 div[data-testid*="ollapsedControl" i] button > *,
 div[data-testid*="ollapsedControl" i] [role="button"] > *,
@@ -114,6 +118,8 @@ button[data-testid*="ollaps" i] > * {
 
 /* Inject the standard 3-line hamburger icon instead */
 section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button::before,
+[data-testid="stExpandSidebarButton"]::before,
+[data-testid="stExpandSidebarButton"] button::before,
 div[data-testid="collapsedControl"] button::before,
 div[data-testid*="ollapsedControl" i] button::before,
 div[data-testid*="ollapsedControl" i] [role="button"]::before,
@@ -137,6 +143,8 @@ section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button:
 }
 
 /* Color rule for when sidebar is CLOSED (Dark blue text on light canvas background) */
+[data-testid="stExpandSidebarButton"]::before,
+[data-testid="stExpandSidebarButton"] button::before,
 div[data-testid="collapsedControl"] button::before,
 div[data-testid*="ollapsedControl" i] button::before,
 div[data-testid*="ollapsedControl" i] [role="button"]::before,
@@ -147,6 +155,8 @@ button[data-testid*="ollaps" i]::before {
 
 /* Premium gold hover reaction on mouse-over */
 section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button:hover::before,
+[data-testid="stExpandSidebarButton"]:hover::before,
+[data-testid="stExpandSidebarButton"] button:hover::before,
 div[data-testid="collapsedControl"] button:hover::before,
 div[data-testid*="ollapsedControl" i] button:hover::before,
 div[data-testid*="ollapsedControl" i] [role="button"]:hover::before,
@@ -329,6 +339,8 @@ AI-Powered Requirement Intelligence Platform
 """, unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
+
+
 # ---------------------------------
 # HERO SECTION
 # ---------------------------------
