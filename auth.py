@@ -84,6 +84,11 @@ def _inject_global_styles():
         padding: 50px !important;
     }
 
+    /* Target logo images inside the left pane and strip away the dark background box edges */
+    .st-key-left_pane img, [data-testid="stImage"] img {
+        mix-blend-mode: screen !important;
+    }
+
     /* RIGHT DISPLAY PANE - INTERACTIVE CONTROL GATE */
     .st-key-right_pane {
         background: #0B111E !important;
@@ -357,6 +362,7 @@ def _inject_global_styles():
         .st-key-left_pane img, [data-testid="stImage"] img {
             max-width: 50% !important;
             margin: 0 auto !important;
+            mix-blend-mode: screen !important;
         }
         .feature-icon-row {
             display: grid !important;
@@ -395,7 +401,7 @@ def _inject_global_styles():
 # LEFT CANVAS DECORATIONS RENDERER
 # ----------------------------------------------------
 def _render_logo():
-    logo_filename = "logo 2.png"
+    logo_filename = "logo.png"
     if os.path.exists(logo_filename):
         img = Image.open(logo_filename)
         st.image(img, use_container_width=True)
@@ -406,7 +412,7 @@ def _render_logo():
             unsafe_allow_html=True,
         )
 
-    # Injects the lower 4 horizontal core feature badges directly underneath the logo icon 
+    # Injects the lower 4 horizontal core feature badges directly underneath the logo icon
     st.markdown("""
     <div class="feature-icon-row">
         <div class="feature-mini-card">
@@ -457,7 +463,7 @@ def _render_splash_pane():
             st.session_state["onboarding_step"] = "portal"
             st.rerun()
 
-    # Injects the bottom tech indicator tags 
+    # Injects the bottom tech indicator tags
     st.markdown("""
     <div class="tech-footer-container">
         <div class="tech-tag-node">
