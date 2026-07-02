@@ -922,7 +922,6 @@ elif page == "Team Members":
         st.metric("Pending Backlog", total_pending)
 
     st.markdown("<br><br>", unsafe_allow_html=True)
-    
     # 4. RENDER TEAM CARDS DYNAMICALLY
     if not team_members:
         st.info("💡 Your engineering team roster is completely empty! Use the 'Workspace Roster Control' menu above to add your teammates and start tracking tasks.")
