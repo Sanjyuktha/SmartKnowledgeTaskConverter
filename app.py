@@ -78,6 +78,9 @@ section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button 
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
+    position: relative !important;
+    font-size: 0 !important;   /* kills native icon-font ligature text */
+    line-height: 0 !important;
 }
 
 /* 2. Target the button when the sidebar is CLOSED */
@@ -85,13 +88,17 @@ div[data-testid="collapsedControl"] button {
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
+    position: relative !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
 }
 
-/* Hide the default double-arrow SVG icon completely in BOTH states */
-section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button svg,
-section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button svg path,
-div[data-testid="collapsedControl"] button svg,
-div[data-testid="collapsedControl"] button svg path {
+/* Hide the default arrow COMPLETELY, whatever markup it uses:
+   raw <svg>, Material Symbols <span>, or plain ligature text.
+   font-size:0 above already blanks text; this also strips visual paint
+   from any element type so nothing can render underneath the hamburger. */
+section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button > *,
+div[data-testid="collapsedControl"] button > * {
     display: none !important;
     opacity: 0 !important;
 }
@@ -100,12 +107,16 @@ div[data-testid="collapsedControl"] button svg path {
 section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button::before,
 div[data-testid="collapsedControl"] button::before {
     content: "☰" !important;
-    font-size: 24px !important;
+    font-size: 22px !important;
     font-weight: bold !important;
-    display: inline-block !important;
+    display: block !important;
     font-family: 'Inter', sans-serif !important;
     transition: transform 0.2s ease-in-out, color 0.2s ease-in-out !important;
     line-height: 1 !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
 }
 
 /* Color rule for when sidebar is OPEN (White text on dark background) */
@@ -116,13 +127,13 @@ section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button:
 /* Color rule for when sidebar is CLOSED (Dark blue text on light canvas background) */
 div[data-testid="collapsedControl"] button::before {
     color: #0B1F3A !important;
-    margin-left: 10px; /* Gives nice breathing space from screen edge when closed */
+    left: calc(50% + 6px) !important; /* nudges icon right for breathing space from screen edge */
 }
 
 /* Premium gold hover reaction on mouse-over */
 section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button:hover::before,
 div[data-testid="collapsedControl"] button:hover::before {
-    transform: scale(1.1);
+    transform: translate(-50%, -50%) scale(1.15) !important;
     color: #D4A24C !important; 
 }
 
@@ -300,7 +311,6 @@ AI-Powered Requirement Intelligence Platform
 """, unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
-
 # ---------------------------------
 # HERO SECTION
 # ---------------------------------
