@@ -72,8 +72,9 @@ def _inject_global_styles():
     }
 
     /* LEFT DISPLAY PANE - LOGO & FEATURE GRID */
+    /* Blends your white logo seamlessly without edge boxes */
     .st-key-left_pane {
-        background: radial-gradient(circle at 30% 30%, rgba(212, 162, 76, 0.1) 0%, transparent 60%), #0A0F1A !important;
+        background: #FFFFFF !important; 
         border-right: 1px solid rgba(255, 255, 255, 0.05);
         display: flex;
         flex-direction: column;
