@@ -164,9 +164,9 @@ page = st.sidebar.radio(
     "Navigation",
     [
         "Dashboard",
+        "Team Members",
         "Upload Document",
         "Generated Tasks",
-        "Team Members",
         "Analytics",
         "Saved Projects"
     ]
@@ -517,9 +517,6 @@ if page == "Dashboard":
                     </p>
                 </div>
             """, unsafe_allow_html=True)
-# ==========================================
-# UPLOAD PAGE
-# ==========================================
 # ==========================================
 # UPLOAD PAGE
 # ==========================================
