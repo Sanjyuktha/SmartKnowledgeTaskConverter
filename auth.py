@@ -211,8 +211,84 @@ def _inject_global_styles():
         color: #0F172A !important;
         border-bottom-color: #0F172A !important;
     }
+    
+    /* ====================================================
+       BULLETPROOF MOBILE RESPONSIVENESS MATRIX
+       ==================================================== */
+    @media (max-width: 768px) {
+        /* Force Streamlit's structural grid columns to collapse vertically */
+        [data-testid="stHorizontalBlock"] {
+            flex-direction: column !important;
+            min-height: auto !important;
+        }
+        
+        [data-testid="column"] {
+            width: 100% !important;
+            flex: 1 1 100% !important;
+        }
+        
+        /* Strip out parent body margins on small screen bounds */
+        .main .block-container {
+            padding: 10px 10px !important;
+        }
+
+        /* Adjust left pane container behavior on phone layouts */
+        .st-key-left_pane {
+            border-right: none !important;
+            border-bottom: 1px solid #E2E8F0 !important;
+            padding: 30px 20px !important;
+            min-height: auto !important;
+            height: auto !important;
+        }
+        
+        .st-key-left_pane img, [data-testid="stImage"] img {
+            max-width: 55% !important;
+            height: auto !important;
+            margin: 0 auto !important;
+            display: block !important;
+        }
+        
+        /* Balance right pane padding rules so text content fits comfortably */
+        .st-key-right_pane {
+            padding: 40px 20px !important;
+            min-height: auto !important;
+            height: auto !important;
+        }
+        
+        /* Scale down the typography metrics so title headers do not wrap weirdly */
+        .splash-core-title {
+            font-size: 34px !important;
+            text-align: center !important;
+        }
+        .splash-core-tagline {
+            font-size: 12px !important;
+            text-align: center !important;
+            margin-bottom: 30px !important;
+        }
+        .portal-core-title {
+            font-size: 26px !important;
+            text-align: center !important;
+        }
+        .portal-core-sub {
+            font-size: 14px !important;
+            text-align: center !important;
+        }
+        
+        /* Force actions buttons up to full touch targets width */
+        div.stButton > button {
+            width: 100% !important;
+        }
+        
+        /* Ensure responsive layout blocks stack cleanly row-by-row */
+        div[data-testid='stVerticalBlock'] > div {
+            width: 100% !important;
+            transform: none !important;
+        }
+    }
+
     </style>
     """)
+
 
 
 # ----------------------------------------------------
