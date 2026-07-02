@@ -27,43 +27,6 @@ st.set_page_config(
 )
 
 # ---------------------------------
-# GLOBAL CLICK-FORWARDING SCRIPT
-# ---------------------------------
-# Makes entire cards clickable (Dashboard cards + Team Member cards) by
-# listening for any click inside a card and forwarding it to the real
-# (visually hidden) Streamlit button inside that same card. This is more
-# reliable than trying to stack an invisible button pixel-perfectly over
-# the card with CSS, since it doesn't depend on exact positioning/z-index -
-# it just asks "was this click anywhere inside the card container?"
-#
-# Bound once on `document` with event delegation, so it keeps working even
-# as Streamlit re-renders cards on every rerun (the listener itself never
-# gets removed, since `document` persists across reruns).
-st.html(r"""
-<script>
-(function() {
-    if (window.__cardClickDelegationBound) { return; }
-    window.__cardClickDelegationBound = true;
-
-    document.addEventListener('click', function(e) {
-        // Don't intercept clicks on the real button itself (avoid double-fire)
-        if (e.target.closest('button')) { return; }
-
-        const card = e.target.closest(
-            '[class*="st-key-member_card_"], [class*="st-key-dash_card_"]'
-        );
-        if (!card) { return; }
-
-        const btn = card.querySelector('button');
-        if (btn) {
-            btn.click();
-        }
-    }, true);
-})();
-</script>
-""")
-
-# ---------------------------------
 # CSS
 # ---------------------------------
 st.markdown("""
@@ -230,60 +193,6 @@ button[data-testid*="ollaps" i]:hover::before {
 .stRadio input:checked + div {
     color: #A27B5B !important;
     font-weight: bold;
-}
-
-/* ==================================================== */
-/* CLICKABLE TEAM MEMBER CARDS (WHOLE-CARD TOGGLE)      */
-/* ==================================================== */
-/* The actual click detection now happens via JavaScript
-   (see the script injected further below), which listens for
-   clicks anywhere on the card and forwards them to the real
-   button. This CSS just needs to visually hide the button -
-   it no longer needs to be pixel-perfectly stretched over the
-   card, which is what made the old approach fragile. */
-[class*="st-key-member_card_"] {
-    cursor: pointer !important;
-}
-[class*="st-key-member_card_"] div.stButton {
-    height: 0 !important;
-    overflow: hidden !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}
-[class*="st-key-member_card_"] div.stButton > button {
-    height: 0 !important;
-    min-height: 0 !important;
-    padding: 0 !important;
-    border: none !important;
-    background: transparent !important;
-    box-shadow: none !important;
-}
-[class*="st-key-member_card_"]:hover {
-    transform: translateY(-3px) !important;
-    transition: transform 0.2s ease-in-out !important;
-}
-
-/* ==================================================== */
-/* CLICKABLE DASHBOARD CARDS (WHOLE-CARD TOGGLE)        */
-/* ==================================================== */
-/* Same simplified approach as the Team Member cards above,
-   scoped to dash_card_0 through dash_card_3 only. */
-[class*="st-key-dash_card_"] {
-    cursor: pointer !important;
-}
-[class*="st-key-dash_card_"] div.stButton {
-    height: 0 !important;
-    overflow: hidden !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}
-[class*="st-key-dash_card_"] div.stButton > button {
-    height: 0 !important;
-    min-height: 0 !important;
-    padding: 0 !important;
-    border: none !important;
-    background: transparent !important;
-    box-shadow: none !important;
 }
 
 
@@ -467,6 +376,54 @@ if page == "Dashboard":
     project_count = collection.count_documents({"username": st.session_state["username"]})
 
     # ----------------------------------------------------
+    # ADVANCED CONTAINER OVERLAY CSS (Eliminates Code Strings & Empty Boxes)
+    # ----------------------------------------------------
+    st.markdown("""
+    <style>
+    /* Make each column an isolation context for precise overlay tracking */
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stVerticalBlock"] {
+        position: relative !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    /* Transform the empty native buttons into fully transparent overlay sheets */
+    div[data-testid="stVerticalBlock"] div[data-testid="stButton"] button {
+        position: absolute !important;
+        top: -185px !important; /* Move up to precisely match the height of the card above it */
+        left: 0 !important;
+        width: 100% !important;
+        height: 185px !important;
+        background: transparent !important;
+        border: none !important;
+        color: transparent !important;
+        box-shadow: none !important;
+        z-index: 100 !important;
+        cursor: pointer !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Prevent Streamlit layout shifting or hover/focus artifacts on invisible overlays */
+    div[data-testid="stVerticalBlock"] div[data-testid="stButton"] button:hover,
+    div[data-testid="stVerticalBlock"] div[data-testid="stButton"] button:focus,
+    div[data-testid="stVerticalBlock"] div[data-testid="stButton"] button:active {
+        background: transparent !important;
+        border: none !important;
+        color: transparent !important;
+        box-shadow: none !important;
+    }
+
+    /* Force the empty button block wrapper to occupy zero layout space beneath the card */
+    div[data-testid="stVerticalBlock"] div[data-testid="stButton"] {
+        height: 0px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # ----------------------------------------------------
     # 4 PREMIUM INTERACTIVE CARDS (ROBUST HTML + OVERLAY)
     # ----------------------------------------------------
     c1, c2, c3, c4 = st.columns(4)
@@ -475,69 +432,65 @@ if page == "Dashboard":
         is_active = st.session_state.dashboard_card == "tasks"
         border_style = "border: 3px solid #D4A24C; box-shadow: 0 12px 40px rgba(212,162,76,0.25);" if is_active else "border-top: 5px solid #D4A24C; box-shadow: 0 10px 35px rgba(0,0,0,0.08);"
         
-        with st.container(key="dash_card_0"):
-            st.markdown(f"""
-            <div style="background:white; border-radius:28px; padding:28px; height:185px; {border_style} transition: all 0.3s ease;">
-                <p style="color:#6B7280; font-size:13px; font-weight:600; letter-spacing:1px; text-transform:uppercase; margin:0;">TOTAL TASKS</p>
-                <h1 style="margin-top:14px; margin-bottom:0; font-size:44px; color:#22C55E; font-weight:700; line-height:1;">{total_tasks}</h1>
-                <p style="color:#9CA3AF; font-size:14px; margin-top:8px; margin-bottom:0;">AI Generated Tasks</p>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            if st.button("", key="action_trigger_tasks", use_container_width=True):
-                st.session_state.dashboard_card = "overview" if is_active else "tasks"
-                st.rerun()
+        st.markdown(f"""
+        <div style="background:white; border-radius:28px; padding:28px; height:185px; {border_style} transition: all 0.3s ease;">
+            <p style="color:#6B7280; font-size:13px; font-weight:600; letter-spacing:1px; text-transform:uppercase; margin:0;">TOTAL TASKS</p>
+            <h1 style="margin-top:14px; margin-bottom:0; font-size:44px; color:#22C55E; font-weight:700; line-height:1;">{total_tasks}</h1>
+            <p style="color:#9CA3AF; font-size:14px; margin-top:8px; margin-bottom:0;">AI Generated Tasks</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if st.button("", key="action_trigger_tasks", use_container_width=True):
+            st.session_state.dashboard_card = "overview" if is_active else "tasks"
+            st.rerun()
 
     with c2:
         is_active = st.session_state.dashboard_card == "completed"
         border_style = "border: 3px solid #D4A24C; box-shadow: 0 12px 40px rgba(212,162,76,0.25);" if is_active else "border-top: 5px solid #D4A24C; box-shadow: 0 10px 35px rgba(0,0,0,0.08);"
         
-        with st.container(key="dash_card_1"):
-            st.markdown(f"""
-            <div style="background:white; border-radius:28px; padding:28px; height:185px; {border_style} transition: all 0.3s ease;">
-                <p style="color:#6B7280; font-size:13px; font-weight:600; letter-spacing:1px; text-transform:uppercase; margin:0;">COMPLETED</p>
-                <h1 style="margin-top:14px; margin-bottom:0; font-size:44px; color:#16A34A; font-weight:700; line-height:1;">{completed_tasks}</h1>
-                <p style="color:#9CA3AF; font-size:14px; margin-top:8px; margin-bottom:0;">Successfully Finished</p>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            if st.button("", key="action_trigger_completed", use_container_width=True):
-                st.session_state.dashboard_card = "overview" if is_active else "completed"
-                st.rerun()
+        st.markdown(f"""
+        <div style="background:white; border-radius:28px; padding:28px; height:185px; {border_style} transition: all 0.3s ease;">
+            <p style="color:#6B7280; font-size:13px; font-weight:600; letter-spacing:1px; text-transform:uppercase; margin:0;">COMPLETED</p>
+            <h1 style="margin-top:14px; margin-bottom:0; font-size:44px; color:#16A34A; font-weight:700; line-height:1;">{completed_tasks}</h1>
+            <p style="color:#9CA3AF; font-size:14px; margin-top:8px; margin-bottom:0;">Successfully Finished</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if st.button("", key="action_trigger_completed", use_container_width=True):
+            st.session_state.dashboard_card = "overview" if is_active else "completed"
+            st.rerun()
 
     with c3:
         is_active = st.session_state.dashboard_card == "priority"
         border_style = "border: 3px solid #D4A24C; box-shadow: 0 12px 40px rgba(212,162,76,0.25);" if is_active else "border-top: 5px solid #D4A24C; box-shadow: 0 10px 35px rgba(0,0,0,0.08);"
         
-        with st.container(key="dash_card_2"):
-            st.markdown(f"""
-            <div style="background:white; border-radius:28px; padding:28px; height:185px; {border_style} transition: all 0.3s ease;">
-                <p style="color:#6B7280; font-size:13px; font-weight:600; letter-spacing:1px; text-transform:uppercase; margin:0;">HIGH PRIORITY</p>
-                <h1 style="margin-top:14px; margin-bottom:0; font-size:44px; color:#F59E0B; font-weight:700; line-height:1;">{high_tasks}</h1>
-                <p style="color:#9CA3AF; font-size:14px; margin-top:8px; margin-bottom:0;">Needs Attention</p>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            if st.button("", key="action_trigger_priority", use_container_width=True):
-                st.session_state.dashboard_card = "overview" if is_active else "priority"
-                st.rerun()
+        st.markdown(f"""
+        <div style="background:white; border-radius:28px; padding:28px; height:185px; {border_style} transition: all 0.3s ease;">
+            <p style="color:#6B7280; font-size:13px; font-weight:600; letter-spacing:1px; text-transform:uppercase; margin:0;">HIGH PRIORITY</p>
+            <h1 style="margin-top:14px; margin-bottom:0; font-size:44px; color:#F59E0B; font-weight:700; line-height:1;">{high_tasks}</h1>
+            <p style="color:#9CA3AF; font-size:14px; margin-top:8px; margin-bottom:0;">Needs Attention</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if st.button("", key="action_trigger_priority", use_container_width=True):
+            st.session_state.dashboard_card = "overview" if is_active else "priority"
+            st.rerun()
 
     with c4:
         is_active = st.session_state.dashboard_card == "projects"
         border_style = "border: 3px solid #D4A24C; box-shadow: 0 12px 40px rgba(212,162,76,0.25);" if is_active else "border-top: 5px solid #D4A24C; box-shadow: 0 10px 35px rgba(0,0,0,0.08);"
         
-        with st.container(key="dash_card_3"):
-            st.markdown(f"""
-            <div style="background:white; border-radius:28px; padding:28px; height:185px; {border_style} transition: all 0.3s ease;">
-                <p style="color:#6B7280; font-size:13px; font-weight:600; letter-spacing:1px; text-transform:uppercase; margin:0;">PROJECTS</p>
-                <h1 style="margin-top:14px; margin-bottom:0; font-size:44px; color:#3B82F6; font-weight:700; line-height:1;">{project_count}</h1>
-                <p style="color:#9CA3AF; font-size:14px; margin-top:8px; margin-bottom:0;">Stored in MongoDB</p>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            if st.button("", key="action_trigger_projects", use_container_width=True):
-                st.session_state.dashboard_card = "overview" if is_active else "projects"
-                st.rerun()
+        st.markdown(f"""
+        <div style="background:white; border-radius:28px; padding:28px; height:185px; {border_style} transition: all 0.3s ease;">
+            <p style="color:#6B7280; font-size:13px; font-weight:600; letter-spacing:1px; text-transform:uppercase; margin:0;">PROJECTS</p>
+            <h1 style="margin-top:14px; margin-bottom:0; font-size:44px; color:#3B82F6; font-weight:700; line-height:1;">{project_count}</h1>
+            <p style="color:#9CA3AF; font-size:14px; margin-top:8px; margin-bottom:0;">Stored in MongoDB</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if st.button("", key="action_trigger_projects", use_container_width=True):
+            st.session_state.dashboard_card = "overview" if is_active else "projects"
+            st.rerun()
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -979,76 +932,20 @@ elif page == "Team Members":
                 progress = int((stats["completed"] / stats["assigned"] * 100)) if stats["assigned"] > 0 else 0
                 badge = '🔴 Heavy' if stats["pending"] >= 6 else ('🟡 Mod' if 3 <= stats["pending"] <= 5 else '🟢 Light')
                 
-                is_selected = (st.session_state.get("selected_member") == member)
-                card_border = "2px solid #D4A24C" if is_selected else "1px solid transparent"
-
-                with st.container(key=f"member_card_{i}"):
-                    st.markdown(f"""
-                    <div style="background: white; border-radius: 24px; padding: 28px 28px 20px 28px; box-shadow: 0 12px 35px rgba(0,0,0,.06); margin-bottom: 10px; border: {card_border};">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px;">
-                            <h3 style="margin: 0; color: #0B1F3A; font-weight: 700; font-size: 22px;">{member}</h3>
-                            <span style="font-size:12px; font-weight:700;">{badge} Workload</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 15px; color: #4B5563;"><span>📋 Assigned Tasks</span><b>{stats['assigned']}</b></div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 15px; color: #4B5563;"><span>✅ Completed Sprint</span><b style="color:#16A34A;">{stats['completed']}</b></div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 15px; color: #4B5563;"><span>⏳ Pending Tasks</span><b style="color:#EF4444;">{stats['pending']}</b></div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    st.progress(progress / 100)
-
-                    # Invisible full-card button: stretched over the whole card via
-                    # CSS so clicking anywhere on it toggles the details open/closed,
-                    # instead of needing a separate visible button underneath.
-                    if st.button("open portfolio", key=f"card_toggle_{i}"):
-                        if is_selected:
-                            st.session_state.selected_member = None
-                        else:
-                            st.session_state.selected_member = member
-                        st.rerun()
-
-        # 5. DETAILED PORTFOLIO VIEW FOR THE SELECTED MEMBER
-        # This is the piece that was missing: the button above only ever SET
-        # selected_member, but nothing ever READ it to actually render anything.
-        if st.session_state.get("selected_member"):
-            selected = st.session_state.selected_member
-
-            if selected not in member_stats:
-                # Member was removed from the roster after being selected - reset safely
-                st.session_state.selected_member = None
-            else:
-                stats = member_stats[selected]
-                st.markdown("<br>", unsafe_allow_html=True)
-
                 st.markdown(f"""
-                <div style="background:white; border-radius:24px; padding:32px 32px 20px 32px; box-shadow:0 12px 35px rgba(0,0,0,.08); margin-bottom:16px; border: 2px solid #D4A24C;">
-                    <h2 style="color:#0B1F3A; margin-bottom:4px;">🔍 {selected}'s Portfolio</h2>
-                    <p style="color:#7B8794; margin-top:0; margin-bottom:0;">Detailed breakdown of assigned work across all projects.</p>
+                <div style="background: white; border-radius: 24px; padding: 28px 28px 20px 28px; box-shadow: 0 12px 35px rgba(0,0,0,.06); margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px;">
+                        <h3 style="margin: 0; color: #0B1F3A; font-weight: 700; font-size: 22px;">{member}</h3>
+                        <span style="font-size:12px; font-weight:700;">{badge} Workload</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 15px; color: #4B5563;"><span>📋 Assigned Tasks</span><b>{stats['assigned']}</b></div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 15px; color: #4B5563;"><span>✅ Completed Sprint</span><b style="color:#16A34A;">{stats['completed']}</b></div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 15px; color: #4B5563;"><span>⏳ Pending Tasks</span><b style="color:#EF4444;">{stats['pending']}</b></div>
                 </div>
                 """, unsafe_allow_html=True)
-
-                if st.button("✖ Close Portfolio View", key="close_portfolio"):
-                    st.session_state.selected_member = None
-                    st.rerun()
-
-                st.markdown("<br>", unsafe_allow_html=True)
-
-                if not stats["projects_map"]:
-                    st.info(f"{selected} has no assigned tasks yet.")
-                else:
-                    for project_name, task_groups in stats["projects_map"].items():
-                        completed_count = len(task_groups["completed"])
-                        pending_count = len(task_groups["pending"])
-                        with st.expander(f"📁 {project_name}  —  {completed_count} done / {pending_count} pending", expanded=True):
-                            if task_groups["completed"]:
-                                st.markdown("**✅ Completed Tasks**")
-                                for t in task_groups["completed"]:
-                                    st.markdown(f"- {t.get('task', 'Untitled Task')}")
-                            if task_groups["pending"]:
-                                st.markdown("**⏳ Pending Tasks**")
-                                for t in task_groups["pending"]:
-                                    st.markdown(f"- {t.get('task', 'Untitled Task')}")
-                            if not task_groups["completed"] and not task_groups["pending"]:
-                                st.caption("No tasks recorded in this project yet.")
+                st.progress(progress / 100)
+                if st.button(f"🔍 Profile Portfolio: {member}", key=f"view_{member}", use_container_width=True):
+                    st.session_state.selected_member = member
 # ==========================================
 # ANALYTICS PAGE
 # ==========================================
