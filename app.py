@@ -50,12 +50,6 @@ html, body, [class*="css"]{
     );
 }
 
-    border-right:1px solid rgba(255,255,255,0.08);
-}
-
-section[data-testid="stSidebar"]{
-    width:280px !important;
-}
 
 [data-testid="stSidebar"] *{
     color:white;
