@@ -75,31 +75,61 @@ section[data-testid="stSidebar"]{
     padding:35px;
     border-radius:24px;
 }
-/* ---------- REPLACE SIDEBAR ARROW WITH HAMBURGER MENU ---------- */
-section[data-testid="stSidebar"] button[data-testid="collapsedControl"],
-[data-testid="stSidebar"] button {
+/* ==================================================== */
+/* PERFECT SIDEBAR TOGGLE TO HAMBURGER MENU CONVERSION  */
+/* ==================================================== */
+
+/* 1. Target the button when the sidebar is OPEN */
+section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button {
     background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
-[data-testid="stSidebar"] button svg {
+/* 2. Target the button when the sidebar is CLOSED */
+div[data-testid="collapsedControl"] button {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Hide the default double-arrow SVG icon completely in BOTH states */
+section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button svg,
+div[data-testid="collapsedControl"] button svg {
     display: none !important;
 }
 
-[data-testid="stSidebar"] button::before {
+/* Inject the standard 3-line hamburger icon instead */
+section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button::before,
+div[data-testid="collapsedControl"] button::before {
     content: "☰" !important;
-    font-size: 22px !important;
-    color: #FFFFFF !important;
+    font-size: 24px !important;
     font-weight: bold !important;
-    display: block !important;
+    display: inline-block !important;
     font-family: 'Inter', sans-serif !important;
-    transition: transform 0.2s ease-in-out !important;
-    margin-top: -2px;
+    transition: transform 0.2s ease-in-out, color 0.2s ease-in-out !important;
+    line-height: 1 !important;
 }
 
-[data-testid="stSidebar"] button:hover::before {
+/* Color rule for when sidebar is OPEN (White text on dark background) */
+section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button::before {
+    color: #FFFFFF !important;
+}
+
+/* Color rule for when sidebar is CLOSED (Dark blue text on light canvas background) */
+div[data-testid="collapsedControl"] button::before {
+    color: #0B1F3A !important;
+    margin-left: 10px; /* Gives nice breathing space from screen edge when closed */
+}
+
+/* Premium gold hover reaction on mouse-over */
+section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button:hover::before,
+div[data-testid="collapsedControl"] button:hover::before {
     transform: scale(1.1);
     color: #D4A24C !important; 
 }
+
+/* ==================================================== */
 
 /* ========================= */
 /* ADD THE NEW CODE HERE */
