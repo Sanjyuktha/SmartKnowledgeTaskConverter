@@ -401,7 +401,7 @@ def _inject_global_styles():
 # LEFT CANVAS DECORATIONS RENDERER
 # ----------------------------------------------------
 def _render_logo():
-    logo_filename = "logo new.png"
+    logo_filename = "logoo.png"
     if os.path.exists(logo_filename):
         img = Image.open(logo_filename)
         st.image(img, use_container_width=True)
