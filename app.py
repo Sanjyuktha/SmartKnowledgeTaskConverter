@@ -83,8 +83,14 @@ section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button 
     line-height: 0 !important;
 }
 
-/* 2. Target the button when the sidebar is CLOSED */
-div[data-testid="collapsedControl"] button {
+/* 2. Target the button when the sidebar is CLOSED
+   Using substring + case-insensitive matching because Streamlit has
+   shipped this testid under slightly different names across versions
+   (collapsedControl, stSidebarCollapsedControl, etc.) */
+div[data-testid="collapsedControl"] button,
+div[data-testid*="ollapsedControl" i] button,
+div[data-testid*="ollapsedControl" i] [role="button"],
+button[data-testid*="ollaps" i] {
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
@@ -98,14 +104,20 @@ div[data-testid="collapsedControl"] button {
    font-size:0 above already blanks text; this also strips visual paint
    from any element type so nothing can render underneath the hamburger. */
 section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button > *,
-div[data-testid="collapsedControl"] button > * {
+div[data-testid="collapsedControl"] button > *,
+div[data-testid*="ollapsedControl" i] button > *,
+div[data-testid*="ollapsedControl" i] [role="button"] > *,
+button[data-testid*="ollaps" i] > * {
     display: none !important;
     opacity: 0 !important;
 }
 
 /* Inject the standard 3-line hamburger icon instead */
 section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button::before,
-div[data-testid="collapsedControl"] button::before {
+div[data-testid="collapsedControl"] button::before,
+div[data-testid*="ollapsedControl" i] button::before,
+div[data-testid*="ollapsedControl" i] [role="button"]::before,
+button[data-testid*="ollaps" i]::before {
     content: "☰" !important;
     font-size: 22px !important;
     font-weight: bold !important;
@@ -125,14 +137,20 @@ section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button:
 }
 
 /* Color rule for when sidebar is CLOSED (Dark blue text on light canvas background) */
-div[data-testid="collapsedControl"] button::before {
+div[data-testid="collapsedControl"] button::before,
+div[data-testid*="ollapsedControl" i] button::before,
+div[data-testid*="ollapsedControl" i] [role="button"]::before,
+button[data-testid*="ollaps" i]::before {
     color: #0B1F3A !important;
     left: calc(50% + 6px) !important; /* nudges icon right for breathing space from screen edge */
 }
 
 /* Premium gold hover reaction on mouse-over */
 section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button:hover::before,
-div[data-testid="collapsedControl"] button:hover::before {
+div[data-testid="collapsedControl"] button:hover::before,
+div[data-testid*="ollapsedControl" i] button:hover::before,
+div[data-testid*="ollapsedControl" i] [role="button"]:hover::before,
+button[data-testid*="ollaps" i]:hover::before {
     transform: translate(-50%, -50%) scale(1.15) !important;
     color: #D4A24C !important; 
 }
