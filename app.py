@@ -75,7 +75,31 @@ section[data-testid="stSidebar"]{
     padding:35px;
     border-radius:24px;
 }
+/* ---------- REPLACE SIDEBAR ARROW WITH HAMBURGER MENU ---------- */
+section[data-testid="stSidebar"] button[data-testid="collapsedControl"],
+[data-testid="stSidebar"] button {
+    background: transparent !important;
+}
 
+[data-testid="stSidebar"] button svg {
+    display: none !important;
+}
+
+[data-testid="stSidebar"] button::before {
+    content: "☰" !important;
+    font-size: 22px !important;
+    color: #FFFFFF !important;
+    font-weight: bold !important;
+    display: block !important;
+    font-family: 'Inter', sans-serif !important;
+    transition: transform 0.2s ease-in-out !important;
+    margin-top: -2px;
+}
+
+[data-testid="stSidebar"] button:hover::before {
+    transform: scale(1.1);
+    color: #D4A24C !important; 
+}
 
 /* ========================= */
 /* ADD THE NEW CODE HERE */
