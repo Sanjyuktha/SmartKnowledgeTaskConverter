@@ -72,9 +72,8 @@ def _inject_global_styles():
     }
 
     /* LEFT DISPLAY PANE - LOGO & FEATURE GRID */
-    /* Blends your white logo seamlessly without edge boxes */
     .st-key-left_pane {
-        background: #FFFFFF !important; 
+        background: radial-gradient(circle at 30% 30%, rgba(212, 162, 76, 0.1) 0%, transparent 60%), #0A0F1A !important;
         border-right: 1px solid rgba(255, 255, 255, 0.05);
         display: flex;
         flex-direction: column;
@@ -396,7 +395,7 @@ def _inject_global_styles():
 # LEFT CANVAS DECORATIONS RENDERER
 # ----------------------------------------------------
 def _render_logo():
-    logo_filename = "logo.png"
+    logo_filename = "logo 2.png"
     if os.path.exists(logo_filename):
         img = Image.open(logo_filename)
         st.image(img, use_container_width=True)
