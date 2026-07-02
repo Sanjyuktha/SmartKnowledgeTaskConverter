@@ -195,6 +195,45 @@ button[data-testid*="ollaps" i]:hover::before {
     font-weight: bold;
 }
 
+/* ==================================================== */
+/* CLICKABLE TEAM MEMBER CARDS (WHOLE-CARD TOGGLE)      */
+/* ==================================================== */
+/* Each member card container gets its own key like
+   "member_card_0", "member_card_1"... - target all of them
+   generically via substring match so this works regardless
+   of how many team members exist. */
+[class*="st-key-member_card_"] {
+    position: relative !important;
+}
+
+/* Stretch the button's wrapping div over the entire card */
+[class*="st-key-member_card_"] div.stButton {
+    position: absolute !important;
+    inset: 0 !important;
+    margin: 0 !important;
+    z-index: 3 !important;
+}
+
+/* Make the button itself invisible but fully clickable, and
+   give a subtle lift-on-hover so it still feels interactive
+   even though there's no visible button */
+[class*="st-key-member_card_"] div.stButton > button {
+    width: 100% !important;
+    height: 100% !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: transparent !important;
+    font-size: 0 !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    transform: none !important;
+}
+[class*="st-key-member_card_"]:hover {
+    transform: translateY(-3px) !important;
+    transition: transform 0.2s ease-in-out !important;
+}
+
 
 
 
@@ -932,20 +971,76 @@ elif page == "Team Members":
                 progress = int((stats["completed"] / stats["assigned"] * 100)) if stats["assigned"] > 0 else 0
                 badge = '🔴 Heavy' if stats["pending"] >= 6 else ('🟡 Mod' if 3 <= stats["pending"] <= 5 else '🟢 Light')
                 
-                st.markdown(f"""
-                <div style="background: white; border-radius: 24px; padding: 28px 28px 20px 28px; box-shadow: 0 12px 35px rgba(0,0,0,.06); margin-bottom: 10px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px;">
-                        <h3 style="margin: 0; color: #0B1F3A; font-weight: 700; font-size: 22px;">{member}</h3>
-                        <span style="font-size:12px; font-weight:700;">{badge} Workload</span>
+                is_selected = (st.session_state.get("selected_member") == member)
+                card_border = "2px solid #D4A24C" if is_selected else "1px solid transparent"
+
+                with st.container(key=f"member_card_{i}"):
+                    st.markdown(f"""
+                    <div style="background: white; border-radius: 24px; padding: 28px 28px 20px 28px; box-shadow: 0 12px 35px rgba(0,0,0,.06); margin-bottom: 10px; border: {card_border};">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px;">
+                            <h3 style="margin: 0; color: #0B1F3A; font-weight: 700; font-size: 22px;">{member}</h3>
+                            <span style="font-size:12px; font-weight:700;">{badge} Workload</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 15px; color: #4B5563;"><span>📋 Assigned Tasks</span><b>{stats['assigned']}</b></div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 15px; color: #4B5563;"><span>✅ Completed Sprint</span><b style="color:#16A34A;">{stats['completed']}</b></div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 15px; color: #4B5563;"><span>⏳ Pending Tasks</span><b style="color:#EF4444;">{stats['pending']}</b></div>
                     </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 15px; color: #4B5563;"><span>📋 Assigned Tasks</span><b>{stats['assigned']}</b></div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 15px; color: #4B5563;"><span>✅ Completed Sprint</span><b style="color:#16A34A;">{stats['completed']}</b></div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 15px; color: #4B5563;"><span>⏳ Pending Tasks</span><b style="color:#EF4444;">{stats['pending']}</b></div>
+                    """, unsafe_allow_html=True)
+                    st.progress(progress / 100)
+
+                    # Invisible full-card button: stretched over the whole card via
+                    # CSS so clicking anywhere on it toggles the details open/closed,
+                    # instead of needing a separate visible button underneath.
+                    if st.button("open portfolio", key=f"card_toggle_{i}"):
+                        if is_selected:
+                            st.session_state.selected_member = None
+                        else:
+                            st.session_state.selected_member = member
+                        st.rerun()
+
+        # 5. DETAILED PORTFOLIO VIEW FOR THE SELECTED MEMBER
+        # This is the piece that was missing: the button above only ever SET
+        # selected_member, but nothing ever READ it to actually render anything.
+        if st.session_state.get("selected_member"):
+            selected = st.session_state.selected_member
+
+            if selected not in member_stats:
+                # Member was removed from the roster after being selected - reset safely
+                st.session_state.selected_member = None
+            else:
+                stats = member_stats[selected]
+                st.markdown("<br>", unsafe_allow_html=True)
+
+                st.markdown(f"""
+                <div style="background:white; border-radius:24px; padding:32px 32px 20px 32px; box-shadow:0 12px 35px rgba(0,0,0,.08); margin-bottom:16px; border: 2px solid #D4A24C;">
+                    <h2 style="color:#0B1F3A; margin-bottom:4px;">🔍 {selected}'s Portfolio</h2>
+                    <p style="color:#7B8794; margin-top:0; margin-bottom:0;">Detailed breakdown of assigned work across all projects.</p>
                 </div>
                 """, unsafe_allow_html=True)
-                st.progress(progress / 100)
-                if st.button(f"🔍 Profile Portfolio: {member}", key=f"view_{member}", use_container_width=True):
-                    st.session_state.selected_member = member
+
+                if st.button("✖ Close Portfolio View", key="close_portfolio"):
+                    st.session_state.selected_member = None
+                    st.rerun()
+
+                st.markdown("<br>", unsafe_allow_html=True)
+
+                if not stats["projects_map"]:
+                    st.info(f"{selected} has no assigned tasks yet.")
+                else:
+                    for project_name, task_groups in stats["projects_map"].items():
+                        completed_count = len(task_groups["completed"])
+                        pending_count = len(task_groups["pending"])
+                        with st.expander(f"📁 {project_name}  —  {completed_count} done / {pending_count} pending", expanded=True):
+                            if task_groups["completed"]:
+                                st.markdown("**✅ Completed Tasks**")
+                                for t in task_groups["completed"]:
+                                    st.markdown(f"- {t.get('task', 'Untitled Task')}")
+                            if task_groups["pending"]:
+                                st.markdown("**⏳ Pending Tasks**")
+                                for t in task_groups["pending"]:
+                                    st.markdown(f"- {t.get('task', 'Untitled Task')}")
+                            if not task_groups["completed"] and not task_groups["pending"]:
+                                st.caption("No tasks recorded in this project yet.")
 # ==========================================
 # ANALYTICS PAGE
 # ==========================================
