@@ -29,7 +29,8 @@ def _ensure_wide_layout():
 # HIGH-END LUXURY DARK THEME INJECTION
 # ----------------------------------------------------
 def _inject_global_styles():
-    st.html("""
+    # Enforced as a Raw String using r""" to safely bypass Python 3.14 type checking
+    st.html(r"""
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
     /* Full screen canvas overhaul to deep cinematic dark theme */
@@ -278,6 +279,23 @@ def _inject_global_styles():
         display: block !important;
     }
 
+    /* ---------- SECONDARY TEXT STYLES ---------- */
+    .portal-core-title {
+        color: #FFFFFF !important;
+        font-family: 'Inter', sans-serif !important;
+        font-size: clamp(26px, 2.6vw, 40px) !important;
+        font-weight: 800 !important;
+        letter-spacing: -1.5px !important;
+        margin: 0 0 8px 0 !important;
+        white-space: nowrap !important;
+    }
+    .portal-core-sub {
+        color: #566475 !important;
+        font-family: 'Inter', sans-serif !important;
+        font-size: 15px !important;
+        margin: 0 0 30px 0 !important;
+    }
+
     /* ---------- LEFT LOGO FEATURE CARDS ROW ---------- */
     .feature-icon-row {
         display: flex !important;
@@ -323,10 +341,10 @@ def _inject_global_styles():
        RESPONSIVE MATRIX ADJUSTMENTS FOR MOBILE VIEWPORTS
        ==================================================== */
     @media (max-width: 992px) {
-        [data-testid="stHorizontalBlock"] {
+        div[data-testid="stHorizontalBlock"] {
             flex-direction: column !important;
         }
-        [data-testid="column"] {
+        div[data-testid="column"] {
             width: 100% !important;
             flex: 1 1 100% !important;
         }
@@ -370,7 +388,7 @@ def _inject_global_styles():
         }
     }
     </style>
-    """, unsafe_allow_html=True)
+    """)
 
 
 # ----------------------------------------------------
@@ -388,7 +406,7 @@ def _render_logo():
             unsafe_allow_html=True,
         )
 
-    # Injects the lower 4 horizontal core feature badges directly underneath the logo icon
+    # Injects the lower 4 horizontal core feature badges directly underneath the logo icon 
     st.markdown("""
     <div class="feature-icon-row">
         <div class="feature-mini-card">
@@ -439,7 +457,7 @@ def _render_splash_pane():
             st.session_state["onboarding_step"] = "portal"
             st.rerun()
 
-    # Injects the bottom tech indicator tags
+    # Injects the bottom tech indicator tags 
     st.markdown("""
     <div class="tech-footer-container">
         <div class="tech-tag-node">
@@ -464,9 +482,9 @@ def _render_portal_pane():
             st.session_state["onboarding_step"] = "splash"
             st.rerun()
 
-    st.markdown('<h1 class="portal-core-title" style="color:white; font-size:32px; font-weight:800; letter-spacing:-1px; margin-bottom:5px;">READY TO TRANSFORM?</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="portal-core-title">READY TO TRANSFORM?</h1>', unsafe_allow_html=True)
     st.markdown(
-        '<p class="portal-core-sub" style="color:#566475; font-size:14px; margin-bottom:25px;">Log into your workspace environment or deploy a fresh instance.</p>',
+        '<p class="portal-core-sub">Log into your workspace environment or deploy a fresh instance.</p>',
         unsafe_allow_html=True,
     )
 
